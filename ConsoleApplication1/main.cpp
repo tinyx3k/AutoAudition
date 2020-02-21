@@ -4,26 +4,14 @@
 #include "main.h"
 #include <thread>
 
-// keymap: https://github.com/dorianj/CoRD/blob/master/Resources/keymap.txt
-enum ScanCode
-{
-    SCANCODE_X = 0x2D,
-    SCANCODE_Y = 0x15,
-    SCANCODE_ESC = 0x01,
-   
-    SCANCODE_LEFT = 0x4b,
-    SCANCODE_RIGHT = 0x4d,
-    SCANCODE_UP = 0x48,
-    SCANCODE_DOWN = 0x50,
-    
-    /*
-    SCANCODE_LEFT = 0x14,
-    SCANCODE_RIGHT = 0x19,
-    SCANCODE_UP = 0x26,
-    SCANCODE_DOWN = 0x1F,
-    */
-};
-bool autoKeyDone = false;
+char output[MAX_DATA_LENGTH];
+char incomingData[MAX_DATA_LENGTH];
+
+// change the name of the port with the port name of your computer
+// must remember that the backslashes are essential so do not remove them
+string port = "\\\\.\\COM6";
+SerialPort arduino(port);
+
 DWORD gameId;
 HWND gameWindow;
 Mat len = imread("btn/len.png");
@@ -36,13 +24,10 @@ Mat dt = imread("btn/dt.png");
 Mat dp = imread("btn/dp.png");
 Mat img;
 
-InterceptionContext context;
-InterceptionDevice device;
-InterceptionKeyStroke stroke;
-std::map<int, ScanCode> buttons;
-std::vector<ScanCode> queueButtons;
+std::map<int, string> buttons;
+string queueButtons = "";
 
-Mat FindButton(Mat ref, Mat tpl, ScanCode btn) {
+Mat FindButton(Mat ref, Mat tpl, string btn) {
     Mat gref, gtpl;
     cvtColor(ref, gref, COLOR_RGB2BGRA);
     cvtColor(tpl, gtpl, COLOR_RGB2BGRA);
@@ -78,66 +63,62 @@ Mat FindButton(Mat ref, Mat tpl, ScanCode btn) {
 
 void Screenshot() {
     namedWindow("clone", WINDOW_NORMAL);
-
     while (true) {
-    buttons.clear();
-    
-    img = hwnd2mat(gameWindow);
-    /*
-    img = FindButton(img, len, "len");
-    img = FindButton(img, xuong, "xuong");
-    img = FindButton(img, trai, "trai");
-    img = FindButton(img, phai, "phai");
-    img = FindButton(img, dl, "xuong");
-    img = FindButton(img, dx, "len");
-    img = FindButton(img, dt, "phai");
-    img = FindButton(img, dp, "trai");
-    */
+        buttons.clear();
 
-    img = FindButton(img, len, SCANCODE_UP);
-    img = FindButton(img, xuong, SCANCODE_DOWN);
-    img = FindButton(img, trai, SCANCODE_LEFT);
-    img = FindButton(img, phai, SCANCODE_RIGHT);
-    img = FindButton(img, dl, SCANCODE_DOWN);
-    img = FindButton(img, dx, SCANCODE_UP);
-    img = FindButton(img, dt, SCANCODE_RIGHT);
-    img = FindButton(img, dp, SCANCODE_LEFT);
-    queueButtons.clear();
-    for (std::map<int, ScanCode>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
-        queueButtons.push_back(it->second);
-           
-    }
-    autoKeyDone = false;
-    imshow("clone", img);
-    waitKey(1);
-   
-   }
-}
-
-void Autokey() {
-    int countButtons = 0;
-    while (interception_receive(context, device = interception_wait(context), (InterceptionStroke*)&stroke, 1) > 0)
-    {
-        interception_send(context, device, (InterceptionStroke*)&stroke, 1);
-        if (autoKeyDone == false && stroke.code == SCANCODE_X) {
-            for (int i = 0; i < queueButtons.size(); i++) {
-                stroke.code = queueButtons[i];
-                std::cout << queueButtons[i] << " ";
-                interception_send(context, device, (InterceptionStroke*)&stroke, 1);
-            }
-            std::cout << " Done" << std::endl;
-            autoKeyDone = true;
+        img = hwnd2mat(gameWindow);
+        img = FindButton(img, len, "u");
+        img = FindButton(img, xuong, "d");
+        img = FindButton(img, trai, "l");
+        img = FindButton(img, phai, "r");
+        img = FindButton(img, dl, "d");
+        img = FindButton(img, dx, "u");
+        img = FindButton(img, dt, "r");
+        img = FindButton(img, dp, "l");
+        queueButtons.clear();
+        for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
+            queueButtons += it->second + ";";
         }
+
+        Sleep(50);
+
+        char* charArray = new char[queueButtons.size() + 1];
+        // copy(queueButtons.begin(), queueButtons.end(), charArray);
+        for (int x = 0; x < queueButtons.size(); x++) {
+            charArray[x] = queueButtons[x];
+        }
+        charArray[queueButtons.size()] = '\n';
+        arduino.writeSerialPort(charArray, queueButtons.size() + 1);
+
+        while (true) {
+            memset(output, 0, MAX_DATA_LENGTH);
+            arduino.readSerialPort(output, MAX_DATA_LENGTH);
+            std::cout << ">>>>" << output << std::endl;
+            string str(output);
+            if (str.find("XONG") != std::string::npos) {
+                std::cout << "No xong that roi" << std::endl;
+                break;
+            }
+            Sleep(50);
+        }
+        Sleep(50);
+        // Continue loop img
+        imshow("clone", img);   
+        waitKey(50);
     }
-       
-    
-   // interception_destroy_context(context);
 }
+
 
 int main()
 {
-    context = interception_create_context();
-    interception_set_filter(context, interception_is_keyboard, INTERCEPTION_FILTER_KEY_DOWN | INTERCEPTION_FILTER_KEY_UP);
+    if (arduino.isConnected()) {
+        cout << "Connection made" << endl << endl;
+    }
+    else {
+        cout << "Error in port name" << endl << endl;
+        cin.get();
+        return 0;
+    }
 
     //Mat img = imread("lena.jpg");
     gameId = GetGameProcess(L"Audition.exe");
@@ -146,16 +127,16 @@ int main()
 
     std::thread ScreenshotThread(Screenshot);
 
-    std::thread AutokeyThread(Autokey);
+    
 
-    while (true) {
+
+    while (arduino.isConnected()) {
         if (GetAsyncKeyState(VK_F12)) {
             exit(0);
             ExitProcess(0);
         }
         Sleep(100);
     }
-   
     
     return 0;
 }
@@ -211,8 +192,6 @@ Mat hwnd2mat(HWND hwnd)
 
     return src;
 }
-
-
 
 int GetGameProcess(LPCWSTR name) {
     PROCESSENTRY32 entry;
