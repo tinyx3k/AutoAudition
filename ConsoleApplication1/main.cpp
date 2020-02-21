@@ -118,20 +118,16 @@ void Autokey() {
     int countButtons = 0;
     while (interception_receive(context, device = interception_wait(context), (InterceptionStroke*)&stroke, 1) > 0)
     {
+        interception_send(context, device, (InterceptionStroke*)&stroke, 1);
         if (autoKeyDone == false && stroke.code == SCANCODE_X) {
             for (int i = 0; i < queueButtons.size(); i++) {
                 stroke.code = queueButtons[i];
                 std::cout << queueButtons[i] << " ";
                 interception_send(context, device, (InterceptionStroke*)&stroke, 1);
-                Sleep(100);
             }
             std::cout << " Done" << std::endl;
             autoKeyDone = true;
         }
-        else {
-            interception_send(context, device, (InterceptionStroke*)&stroke, 1);
-        }
-        Sleep(1000);
     }
        
     
@@ -140,25 +136,6 @@ void Autokey() {
 
 int main()
 {
-    while (true) {
-        INPUT Inputs[3] = { 0 };
-
-        Inputs[0].type = INPUT_MOUSE;
-        Inputs[0].mi.dx = 1300; // desired X coordinate
-        Inputs[0].mi.dy = 475; // desired Y coordinate
-        Inputs[0].mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-
-        Inputs[1].type = INPUT_MOUSE;
-        Inputs[1].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-
-        Inputs[2].type = INPUT_MOUSE;
-        Inputs[2].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-
-        SendInput(3, Inputs, sizeof(INPUT));
-        Sleep(1000);
-    }
-   
-
     context = interception_create_context();
     interception_set_filter(context, interception_is_keyboard, INTERCEPTION_FILTER_KEY_DOWN | INTERCEPTION_FILTER_KEY_UP);
 
@@ -172,10 +149,6 @@ int main()
     std::thread AutokeyThread(Autokey);
 
     while (true) {
-        if (GetAsyncKeyState(VK_SPACE)) {
-            queueButtons.clear();
-            buttons.clear();
-        }
         if (GetAsyncKeyState(VK_F12)) {
             exit(0);
             ExitProcess(0);
