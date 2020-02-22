@@ -14,14 +14,29 @@ SerialPort arduino(port);
 
 DWORD gameId;
 HWND gameWindow;
-Mat len = imread("btn/len.png");
-Mat xuong = imread("btn/xuong.png");
-Mat trai = imread("btn/trai.png");
-Mat phai = imread("btn/phai.png");
-Mat dl = imread("btn/dl.png");
-Mat dx = imread("btn/dx.png");
-Mat dt = imread("btn/dt.png");
-Mat dp = imread("btn/dp.png");
+Mat one = imread("btn/1.png", -1);
+Mat onered = imread("btn/1d.png", -1);
+
+Mat two = imread("btn/2.png", -1);
+Mat twored = imread("btn/2d.png", -1);
+
+Mat three = imread("btn/3.png", -1);
+Mat threered = imread("btn/3d.png", -1);
+
+Mat four = imread("btn/4.png", -1);
+Mat fourred = imread("btn/4d.png", -1);
+
+Mat six = imread("btn/6.png", -1);
+Mat sixred = imread("btn/6d.png", -1);
+
+Mat seven = imread("btn/7.png", -1);
+Mat sevenred = imread("btn/7d.png", -1);
+
+Mat eight = imread("btn/8.png", -1);
+Mat eightred = imread("btn/8d.png", -1);
+
+Mat nine = imread("btn/9.png", -1);
+Mat ninered = imread("btn/9d.png", -1);
 Mat img;
 
 std::map<int, string> buttons;
@@ -29,22 +44,22 @@ string queueButtons = "";
 
 Mat FindButton(Mat ref, Mat tpl, string btn) {
     Mat gref, gtpl;
-    cvtColor(ref, gref, COLOR_RGB2BGRA);
-    cvtColor(tpl, gtpl, COLOR_RGB2BGRA);
+    cvtColor(ref, gref, COLOR_BGRA2BGR);
+    cvtColor(tpl, gtpl, COLOR_BGRA2BGR);
 
     Mat res(ref.rows - tpl.rows + 1, ref.cols - tpl.cols + 1, CV_32FC1);
     matchTemplate(gref, gtpl, res, TM_CCOEFF_NORMED);
-    threshold(res, res, 0.9, 1., THRESH_TOZERO);
+    threshold(res, res, 0.96, 1.0, THRESH_TOZERO);
 
     while (true)
     {
-        double minval, maxval, threshold = 0.9;
+        double minval, maxval, threshold = 0.96;
         Point minloc, maxloc;
         minMaxLoc(res, &minval, &maxval, &minloc, &maxloc);
 
         if (maxval >= threshold)
         {
-            if (btn == "l") {
+            if (btn == "1") {
                 rectangle(
                     ref,
                     maxloc,
@@ -52,7 +67,7 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
                     CV_RGB(255, 255, 0), 2
                 );
             }
-            else if (btn == "r") {
+            else if (btn == "2") {
                 rectangle(
                     ref,
                     maxloc,
@@ -60,7 +75,7 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
                     CV_RGB(255, 255, 255), 2
                 );
             }
-            else if (btn == "u") {
+            else if (btn == "3") {
                 rectangle(
                     ref,
                     maxloc,
@@ -68,12 +83,44 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
                     CV_RGB(0, 255, 255), 2
                 );
             }
-            else if (btn == "d") {
+            else if (btn == "4") {
                 rectangle(
                     ref,
                     maxloc,
                     Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
                     CV_RGB(0, 0, 0), 2
+                );
+            }
+            else if (btn == "6") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(125, 255, 0), 2
+                );
+            }
+            else if (btn == "7") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(0, 125, 125), 2
+                );
+            }
+            else if (btn == "8") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(125, 0, 125), 2
+                );
+            }
+            else if (btn == "9") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(100, 178, 230), 2
                 );
             }
             
@@ -93,14 +140,30 @@ void Screenshot() {
         buttons.clear();
 
         img = hwnd2mat(gameWindow);
-        img = FindButton(img, len, "u");
-        img = FindButton(img, xuong, "d");
-        img = FindButton(img, trai, "l");
-        img = FindButton(img, phai, "r");
-        img = FindButton(img, dl, "d");
-        img = FindButton(img, dx, "u");
-        img = FindButton(img, dt, "r");
-        img = FindButton(img, dp, "l");
+        img = FindButton(img, one, "1");
+        img = FindButton(img, onered, "1");
+
+        img = FindButton(img, two, "2");
+        img = FindButton(img, twored, "2");
+
+        img = FindButton(img, three, "3");
+        img = FindButton(img, threered, "3");
+
+        img = FindButton(img, four, "4");
+        img = FindButton(img, fourred, "4");
+
+        img = FindButton(img, six, "6");
+        img = FindButton(img, sixred, "6");
+
+        img = FindButton(img, seven, "7");
+        img = FindButton(img, sevenred, "7");
+
+        img = FindButton(img, eight, "8");
+        img = FindButton(img, eightred, "8");
+
+        img = FindButton(img, nine, "9");
+        img = FindButton(img, ninered, "9");
+
 
         queueButtons = "";
 
@@ -150,6 +213,11 @@ int WinMain(HINSTANCE hInstance,
     //Mat img = imread("lena.jpg");
     gameId = GetGameProcess(L"Audition.exe");
     gameWindow = FindWindowFromProcessId(gameId);
+    
+    if (gameId == NULL || gameWindow == NULL) {
+        exit(0);
+    }
+
     img = hwnd2mat(gameWindow);
 
     std::thread ScreenshotThread(Screenshot);

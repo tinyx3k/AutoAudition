@@ -4,6 +4,17 @@
 #define KEY_RIGHT_ALT  0x86
 #define KEY_RIGHT_GUI  0x87
 
+
+#define   KEY_NUMPAD_1 225
+#define   KEY_NUMPAD_2 226
+#define   KEY_NUMPAD_3 227
+#define   KEY_NUMPAD_4 228
+#define   KEY_NUMPAD_5 229
+#define   KEY_NUMPAD_6 230
+#define   KEY_NUMPAD_7 231
+#define   KEY_NUMPAD_8 232
+#define   KEY_NUMPAD_9 233
+
 #define KEY_UP_ARROW   0xDA
 #define KEY_DOWN_ARROW 0xD9
 #define KEY_LEFT_ARROW 0xD8
@@ -33,58 +44,104 @@
 #define KEY_F12        0xCD
 
 void setup() {
-    Serial.begin(9600);
+  Serial.begin(9600);
 }
 
-void up() {
-    Keyboard.press(KEY_UP_ARROW);
-    delay(random(45, 55));
-    Keyboard.release(KEY_UP_ARROW);
+void one() {
+  Keyboard.press(KEY_NUMPAD_1);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_1);
 }
-void down() {
-    Keyboard.press(KEY_DOWN_ARROW);
-    delay(random(45, 55));
-    Keyboard.release(KEY_DOWN_ARROW);
+
+void two() {
+  Keyboard.press(KEY_NUMPAD_2);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_2);
 }
-void left() {
-    Keyboard.press(KEY_LEFT_ARROW);
-    delay(random(45, 55));
-    Keyboard.release(KEY_LEFT_ARROW);
+
+void three() {
+  Keyboard.press(KEY_NUMPAD_3);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_3);
 }
-void right() {
-    Keyboard.press(KEY_RIGHT_ARROW);
-    delay(random(45, 55));
-    Keyboard.release(KEY_RIGHT_ARROW);
+
+void four() {
+  Keyboard.press(KEY_NUMPAD_4);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_4);
 }
+
+void six() {
+  Keyboard.press(KEY_NUMPAD_6);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_6);
+}
+
+
+void seven() {
+  Keyboard.press(KEY_NUMPAD_7);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_7);
+}
+
+
+void eight() {
+  Keyboard.press(KEY_NUMPAD_8);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_8);
+}
+
+void nine() {
+  Keyboard.press(KEY_NUMPAD_9);
+  delay(random(45, 50));
+  Keyboard.release(KEY_NUMPAD_9);
+}
+
 void loop()
 {
-    if (Serial.available() > 0) {
-        String info = Serial.readStringUntil('\n');
-        char buf[sizeof(info)];
-        info.toCharArray(buf, sizeof(buf));
-        char* p = buf;
-        char* s;
-        int delayTime = random(25, 40);
-        while ((s = strtok_r(p, ";", &p)) != NULL) {
-            String str(s);
-            if (str == "u") {
-                up();
-                delay(delayTime);
-            }
-            else if (str == "d") {
-                down();
-                delay(delayTime);
-            }
-            else if (str == "l") {
-                left();
-                delay(delayTime);
-            }
-            else if (str == "r") {
-                right();
-                delay(delayTime);
-            }
-        }
-        Serial.println(info);
+  if(Serial.available() > 0) {
+    String info = Serial.readStringUntil('\n');  
+    char buf[sizeof(info)];
+    info.toCharArray(buf, sizeof(buf));
+    char *p = buf;
+    char *s;
+    int delayTime = random(20, 25);
+    while ((s = strtok_r(p, ";", &p)) != NULL) {
+      delayTime = random(20, 25);
+      String str(s);
+      if(str == "1") {
+        one();
+        delay(delayTime);
+      } else if(str == "2") {
+        two();
+        delay(delayTime);
+      }
+      else if(str == "3") {
+        three();
+        delay(delayTime);
+      }
+       else if(str == "4") {
+        four();
+        delay(delayTime);
+      }
+      else if(str == "6") {
+        six();
+        delay(delayTime);
+      }
+      else if(str == "7") {
+        seven();
+        delay(delayTime);
+      }
+      else if(str == "8") {
+        eight();
+        delay(delayTime);
+      }
+      else if(str == "9") {
+        nine();
+        delay(delayTime);
+      }
     }
-    delay(1);
+    Serial.println(info);
+  }
+  delay(1);
 }
