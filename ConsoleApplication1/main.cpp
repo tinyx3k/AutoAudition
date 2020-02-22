@@ -44,13 +44,39 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
 
         if (maxval >= threshold)
         {
+            if (btn == "l") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(255, 255, 0), 2
+                );
+            }
+            else if (btn == "r") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(255, 255, 255), 2
+                );
+            }
+            else if (btn == "u") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(0, 255, 255), 2
+                );
+            }
+            else if (btn == "d") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(0, 0, 0), 2
+                );
+            }
             
-            rectangle(
-                ref,
-                maxloc,
-                Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                CV_RGB(0, 255, 0), 2
-            );
             
             buttons[maxloc.x] = btn;
             floodFill(res, maxloc, Scalar(0), 0, Scalar(.1), Scalar(1.));
@@ -62,7 +88,7 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
 }
 
 void Screenshot() {
-    namedWindow("clone", WINDOW_NORMAL);
+    namedWindow("OpenCV", WINDOW_NORMAL);
     while (true) {
         buttons.clear();
 
@@ -75,13 +101,12 @@ void Screenshot() {
         img = FindButton(img, dx, "u");
         img = FindButton(img, dt, "r");
         img = FindButton(img, dp, "l");
-        queueButtons.clear();
+
+        queueButtons = "";
+
         for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
             queueButtons += it->second + ";";
         }
-
-        Sleep(50);
-
         char* charArray = new char[queueButtons.size() + 1];
         // copy(queueButtons.begin(), queueButtons.end(), charArray);
         for (int x = 0; x < queueButtons.size(); x++) {
@@ -93,23 +118,25 @@ void Screenshot() {
         while (true) {
             memset(output, 0, MAX_DATA_LENGTH);
             arduino.readSerialPort(output, MAX_DATA_LENGTH);
-            std::cout << ">>>>" << output << std::endl;
             string str(output);
-            if (str.find("XONG") != std::string::npos) {
-                std::cout << "No xong that roi" << std::endl;
+            if (str.find(queueButtons) != std::string::npos) {
+                queueButtons.clear();
+                buttons.clear();
                 break;
             }
-            Sleep(50);
+            Sleep(1);
         }
-        Sleep(50);
         // Continue loop img
-        imshow("clone", img);   
-        waitKey(50);
+        imshow("OpenCV", img);   
+        waitKey(1);
     }
 }
 
 
-int main()
+int WinMain(HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPSTR     lpCmdLine,
+    int       nShowCmd)
 {
     if (arduino.isConnected()) {
         cout << "Connection made" << endl << endl;
