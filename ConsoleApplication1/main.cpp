@@ -2,15 +2,14 @@
 //
 
 #include "main.h"
-#include <thread>
 
 char output[MAX_DATA_LENGTH];
 char incomingData[MAX_DATA_LENGTH];
+int perfectPosition = 425;
 
 // change the name of the port with the port name of your computer
 // must remember that the backslashes are essential so do not remove them
-string port = "\\\\.\\COM6";
-SerialPort arduino(port);
+SerialPort arduino;
 
 DWORD gameId;
 HWND gameWindow;
@@ -37,7 +36,11 @@ Mat eightred = imread("btn/8d.png", -1);
 
 Mat nine = imread("btn/9.png", -1);
 Mat ninered = imread("btn/9d.png", -1);
+
+Mat space = imread("btn/space.png", -1);
 Mat img;
+
+int lastSpacePosition, lastSpaceTime;
 
 std::map<int, string> buttons;
 string queueButtons = "";
@@ -49,11 +52,16 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
 
     Mat res(ref.rows - tpl.rows + 1, ref.cols - tpl.cols + 1, CV_32FC1);
     matchTemplate(gref, gtpl, res, TM_CCOEFF_NORMED);
+ 
     threshold(res, res, 0.96, 1.0, THRESH_TOZERO);
+
 
     while (true)
     {
+        line(ref, cv::Point(perfectPosition, 10), cv::Point(perfectPosition, 18), CV_RGB(255, 0, 0), 2, 8, 0);
+
         double minval, maxval, threshold = 0.96;
+ 
         Point minloc, maxloc;
         minMaxLoc(res, &minval, &maxval, &minloc, &maxloc);
 
@@ -123,9 +131,23 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
                     CV_RGB(100, 178, 230), 2
                 );
             }
+            else if (btn == "sl") {
+                rectangle(
+                    ref,
+                    maxloc,
+                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
+                    CV_RGB(255, 255, 0), 2
+                );
+            }
             
-            
-            buttons[maxloc.x] = btn;
+            if (btn != "sl") {
+                buttons[maxloc.x] = btn;
+            }
+
+            if (btn == "sl") {
+                lastSpacePosition = maxloc.x;
+            }
+          
             floodFill(res, maxloc, Scalar(0), 0, Scalar(.1), Scalar(1.));
         }
         else
@@ -140,6 +162,10 @@ void Screenshot() {
         buttons.clear();
 
         img = hwnd2mat(gameWindow);
+        
+        // Find start space position;
+       
+        img = FindButton(img, space, "sl");
         img = FindButton(img, one, "1");
         img = FindButton(img, onered, "1");
 
@@ -163,32 +189,49 @@ void Screenshot() {
 
         img = FindButton(img, nine, "9");
         img = FindButton(img, ninered, "9");
-
+       
 
         queueButtons = "";
-
         for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
             queueButtons += it->second + ";";
         }
-        char* charArray = new char[queueButtons.size() + 1];
-        // copy(queueButtons.begin(), queueButtons.end(), charArray);
-        for (int x = 0; x < queueButtons.size(); x++) {
-            charArray[x] = queueButtons[x];
-        }
-        charArray[queueButtons.size()] = '\n';
-        arduino.writeSerialPort(charArray, queueButtons.size() + 1);
-
-        while (true) {
-            memset(output, 0, MAX_DATA_LENGTH);
-            arduino.readSerialPort(output, MAX_DATA_LENGTH);
-            string str(output);
-            if (str.find(queueButtons) != std::string::npos) {
-                queueButtons.clear();
-                buttons.clear();
-                break;
+        if (queueButtons.size() > 0) {
+            char* charArray = new char[queueButtons.size() + 1];
+            // copy(queueButtons.begin(), queueButtons.end(), charArray);
+            for (int x = 0; x < queueButtons.size(); x++) {
+                charArray[x] = queueButtons[x];
             }
-            Sleep(1);
+            charArray[queueButtons.size()] = '\n';
+            arduino.writeSerialPort(charArray, queueButtons.size() + 1);
+
+
+            while (true) {
+                memset(output, 0, MAX_DATA_LENGTH);
+                arduino.readSerialPort(output, MAX_DATA_LENGTH);
+                string str(output);
+                if (str.find(queueButtons) != std::string::npos) {
+                    queueButtons.clear();
+                    buttons.clear();
+                    break;
+                }
+            }
         }
+       
+        // Space
+        if (queueButtons.size() == 0) {
+            // Send space
+            int timeNow = (int)std::time(0);
+            if ((perfectPosition - lastSpacePosition < 3 || lastSpacePosition > perfectPosition) && timeNow > lastSpaceTime && lastSpacePosition > 405 && lastSpacePosition < 450) {
+                lastSpaceTime = timeNow;
+                lastSpacePosition = 0;
+                char* charArray2 = new char[3];
+                charArray2[0] = 's';
+                charArray2[1] = ';';
+                charArray2[2] = '\n';
+                arduino.writeSerialPort(charArray2, 3);
+            }
+        }
+
         // Continue loop img
         imshow("OpenCV", img);   
         waitKey(1);
@@ -200,13 +243,31 @@ int WinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
     LPSTR     lpCmdLine,
     int       nShowCmd)
+    
+//int main()
 {
+    string port = "\\\\.\\COM6";
+    ifstream myfile("port.txt");
+    if (myfile.is_open())
+    {
+        getline(myfile, port);
+        myfile.close();
+    }
+    else {
+        MessageBoxA(NULL, "Cannot find port.txt", "Cannot find port.txt", MB_OK);
+        exit(0);
+    }
+
+    arduino.Init(port);
+
     if (arduino.isConnected()) {
         cout << "Connection made" << endl << endl;
     }
     else {
-        cout << "Error in port name" << endl << endl;
-        cin.get();
+
+       // cout << "Error in port name" << endl << endl;
+       // cin.get();
+        MessageBoxA(NULL, "Cannot connect to port", "Cannot connect to port", MB_OK);
         return 0;
     }
 
@@ -226,6 +287,17 @@ int WinMain(HINSTANCE hInstance,
 
 
     while (arduino.isConnected()) {
+
+        if (GetAsyncKeyState(VK_OEM_PLUS) & 1) {
+            perfectPosition += 1;
+            std::cout << "Perfect position +: " << perfectPosition << std::endl;
+        }
+
+        if (GetAsyncKeyState(VK_OEM_MINUS) & 1) {
+            perfectPosition -= 1;
+            std::cout << "Perfect position -: " << perfectPosition << std::endl;
+        }
+
         if (GetAsyncKeyState(VK_F12)) {
             exit(0);
             ExitProcess(0);
@@ -277,7 +349,7 @@ Mat hwnd2mat(HWND hwnd)
     // use the previously created device context with the bitmap
     SelectObject(hwindowCompatibleDC, hbwindow);
     // copy from the window device context to the bitmap device context
-    StretchBlt(hwindowCompatibleDC, 0, 0, width, height, hwindowDC, windowsize.right * 0.2, windowsize.bottom * 0.65, srcwidth, srcheight, SRCCOPY); //change SRCCOPY to NOTSRCCOPY for wacky colors !
+    StretchBlt(hwindowCompatibleDC, 0, 0, width, height, hwindowDC, windowsize.right * 0.2, windowsize.bottom * 0.63, srcwidth, srcheight, SRCCOPY); //change SRCCOPY to NOTSRCCOPY for wacky colors !
     GetDIBits(hwindowCompatibleDC, hbwindow, 0, height, src.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);  //copy from hwindowCompatibleDC to hbwindow
 
     // avoid memory leak

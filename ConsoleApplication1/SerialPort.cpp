@@ -1,7 +1,7 @@
 #include "SerialPort.h"
 
 
-SerialPort::SerialPort(std::string portName)
+void SerialPort::Init(std::string portName)
 {
     this->connected = false;
 

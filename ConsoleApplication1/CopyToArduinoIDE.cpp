@@ -1,5 +1,5 @@
 #include <Keyboard.h>
-
+#define KEY_CTRL   0x80
 #define KEY_RIGHT_SHIFT    0x85
 #define KEY_RIGHT_ALT  0x86
 #define KEY_RIGHT_GUI  0x87
@@ -14,6 +14,7 @@
 #define   KEY_NUMPAD_7 231
 #define   KEY_NUMPAD_8 232
 #define   KEY_NUMPAD_9 233
+#define KEY_SPACE_BAR   0x20
 
 #define KEY_UP_ARROW   0xDA
 #define KEY_DOWN_ARROW 0xD9
@@ -49,52 +50,58 @@ void setup() {
 
 void one() {
   Keyboard.press(KEY_NUMPAD_1);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_1);
 }
 
 void two() {
   Keyboard.press(KEY_NUMPAD_2);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_2);
 }
 
 void three() {
   Keyboard.press(KEY_NUMPAD_3);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_3);
 }
 
 void four() {
   Keyboard.press(KEY_NUMPAD_4);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_4);
 }
 
 void six() {
   Keyboard.press(KEY_NUMPAD_6);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_6);
 }
 
 
 void seven() {
   Keyboard.press(KEY_NUMPAD_7);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_7);
 }
 
 
 void eight() {
   Keyboard.press(KEY_NUMPAD_8);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_8);
 }
 
 void nine() {
   Keyboard.press(KEY_NUMPAD_9);
-  delay(random(45, 50));
+  delay(random(50, 55));
   Keyboard.release(KEY_NUMPAD_9);
+}
+
+void space() {
+  Keyboard.press(KEY_CTRL);
+  delay(random(50));
+  Keyboard.release(KEY_CTRL);
 }
 
 void loop()
@@ -105,9 +112,9 @@ void loop()
     info.toCharArray(buf, sizeof(buf));
     char *p = buf;
     char *s;
-    int delayTime = random(20, 25);
+    int delayTime = random(25, 30);
     while ((s = strtok_r(p, ";", &p)) != NULL) {
-      delayTime = random(20, 25);
+      delayTime = random(25, 30);
       String str(s);
       if(str == "1") {
         one();
@@ -139,6 +146,8 @@ void loop()
       else if(str == "9") {
         nine();
         delay(delayTime);
+      } else if(str == "s") {
+        space();
       }
     }
     Serial.println(info);
