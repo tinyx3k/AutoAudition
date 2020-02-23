@@ -3,6 +3,7 @@
 #include <deque>
 #include <windows.h>
 #include <opencv2/opencv.hpp>
+//#include <opencv2/gpu/gpu.hpp>   
 #include "Tlhelp32.h";
 #include "SerialPort.h"
 #include <ctime>
@@ -12,8 +13,8 @@
 using namespace std;
 using namespace cv;
 
-Mat hwnd2mat(HWND hwnd);
+Mat hwnd2mat(HWND hwnd, int width, int height, int fromX, int fromY);
 int GetGameProcess(LPCWSTR name);
 HWND FindWindowFromProcessId(DWORD dwProcessId);
 RECT gameRect;
-void Screenshot();
+void AutoKey();

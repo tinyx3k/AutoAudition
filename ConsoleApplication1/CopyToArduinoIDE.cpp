@@ -50,57 +50,57 @@ void setup() {
 
 void one() {
   Keyboard.press(KEY_NUMPAD_1);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_1);
 }
 
 void two() {
   Keyboard.press(KEY_NUMPAD_2);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_2);
 }
 
 void three() {
   Keyboard.press(KEY_NUMPAD_3);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_3);
 }
 
 void four() {
   Keyboard.press(KEY_NUMPAD_4);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_4);
 }
 
 void six() {
   Keyboard.press(KEY_NUMPAD_6);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_6);
 }
 
 
 void seven() {
   Keyboard.press(KEY_NUMPAD_7);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_7);
 }
 
 
 void eight() {
   Keyboard.press(KEY_NUMPAD_8);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_8);
 }
 
 void nine() {
   Keyboard.press(KEY_NUMPAD_9);
-  delay(random(50, 55));
+  delay(50);
   Keyboard.release(KEY_NUMPAD_9);
 }
 
 void space() {
   Keyboard.press(KEY_CTRL);
-  delay(random(50));
+  delay(30);
   Keyboard.release(KEY_CTRL);
 }
 
@@ -112,9 +112,8 @@ void loop()
     info.toCharArray(buf, sizeof(buf));
     char *p = buf;
     char *s;
-    int delayTime = random(25, 30);
+    int delayTime = 25;
     while ((s = strtok_r(p, ";", &p)) != NULL) {
-      delayTime = random(25, 30);
       String str(s);
       if(str == "1") {
         one();

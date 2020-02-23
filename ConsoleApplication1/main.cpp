@@ -5,7 +5,7 @@
 
 char output[MAX_DATA_LENGTH];
 char incomingData[MAX_DATA_LENGTH];
-int perfectPosition = 425;
+int perfectPosition = 56;
 
 // change the name of the port with the port name of your computer
 // must remember that the backslashes are essential so do not remove them
@@ -15,30 +15,22 @@ DWORD gameId;
 HWND gameWindow;
 Mat one = imread("btn/1.png", -1);
 Mat onered = imread("btn/1d.png", -1);
-
 Mat two = imread("btn/2.png", -1);
 Mat twored = imread("btn/2d.png", -1);
-
 Mat three = imread("btn/3.png", -1);
 Mat threered = imread("btn/3d.png", -1);
-
 Mat four = imread("btn/4.png", -1);
 Mat fourred = imread("btn/4d.png", -1);
-
 Mat six = imread("btn/6.png", -1);
 Mat sixred = imread("btn/6d.png", -1);
-
 Mat seven = imread("btn/7.png", -1);
 Mat sevenred = imread("btn/7d.png", -1);
-
 Mat eight = imread("btn/8.png", -1);
 Mat eightred = imread("btn/8d.png", -1);
-
 Mat nine = imread("btn/9.png", -1);
 Mat ninered = imread("btn/9d.png", -1);
-
 Mat space = imread("btn/space.png", -1);
-Mat img;
+Mat screenshot, screenshot2;
 
 int lastSpacePosition, lastSpaceTime;
 
@@ -46,21 +38,26 @@ std::map<int, string> buttons;
 string queueButtons = "";
 
 Mat FindButton(Mat ref, Mat tpl, string btn) {
-    Mat gref, gtpl;
+    Mat gref;
     cvtColor(ref, gref, COLOR_BGRA2BGR);
-    cvtColor(tpl, gtpl, COLOR_BGRA2BGR);
 
     Mat res(ref.rows - tpl.rows + 1, ref.cols - tpl.cols + 1, CV_32FC1);
-    matchTemplate(gref, gtpl, res, TM_CCOEFF_NORMED);
+    matchTemplate(gref, tpl, res, TM_CCOEFF_NORMED);
  
-    threshold(res, res, 0.96, 1.0, THRESH_TOZERO);
+    //threshold(res, res, 0.96, 1.0, THRESH_TOZERO);
 
 
     while (true)
     {
-        line(ref, cv::Point(perfectPosition, 10), cv::Point(perfectPosition, 18), CV_RGB(255, 0, 0), 2, 8, 0);
-
         double minval, maxval, threshold = 0.96;
+        if (btn == "sl") {
+            line(ref, cv::Point(perfectPosition, 3), cv::Point(perfectPosition, 17), CV_RGB(255, 0, 0), 2, 8, 0);
+            minval = 0.6; 
+            maxval = 1;
+            threshold = 0.6;
+        }
+       
+       
  
         Point minloc, maxloc;
         minMaxLoc(res, &minval, &maxval, &minloc, &maxloc);
@@ -156,41 +153,51 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
     return ref;
 }
 
-void Screenshot() {
-    namedWindow("OpenCV", WINDOW_NORMAL);
+void Space() {
+    namedWindow("Space", WINDOW_NORMAL);
+   
+    while (true) {
+        lastSpacePosition = 0;
+        screenshot2 = hwnd2mat(gameWindow, 120, 20, 570, 485);
+        screenshot2 = FindButton(screenshot2, space, "sl");
+        // Send space
+        int timeNow = (int)std::time(0);
+        if (lastSpacePosition > 10 && lastSpacePosition < 100 &&  (abs(lastSpacePosition - perfectPosition) < 2 || lastSpacePosition  > perfectPosition) && timeNow > lastSpaceTime) {
+            lastSpaceTime = timeNow;
+            lastSpacePosition = 0;
+            char* charArray2 = new char[3];
+            charArray2[0] = 's';
+            charArray2[1] = ';';
+            charArray2[2] = '\n';
+            arduino.writeSerialPort(charArray2, 3);
+        }
+
+        imshow("Space", screenshot2);
+        waitKey(1);
+    }
+}
+
+void AutoKey() {
+    //namedWindow("OpenCV", WINDOW_NORMAL);
     while (true) {
         buttons.clear();
-
-        img = hwnd2mat(gameWindow);
-        
-        // Find start space position;
-       
-        img = FindButton(img, space, "sl");
-        img = FindButton(img, one, "1");
-        img = FindButton(img, onered, "1");
-
-        img = FindButton(img, two, "2");
-        img = FindButton(img, twored, "2");
-
-        img = FindButton(img, three, "3");
-        img = FindButton(img, threered, "3");
-
-        img = FindButton(img, four, "4");
-        img = FindButton(img, fourred, "4");
-
-        img = FindButton(img, six, "6");
-        img = FindButton(img, sixred, "6");
-
-        img = FindButton(img, seven, "7");
-        img = FindButton(img, sevenred, "7");
-
-        img = FindButton(img, eight, "8");
-        img = FindButton(img, eightred, "8");
-
-        img = FindButton(img, nine, "9");
-        img = FindButton(img, ninered, "9");
-       
-
+        screenshot = hwnd2mat(gameWindow, 480, 40, 270, 516);
+        screenshot = FindButton(screenshot, one, "1");
+        screenshot = FindButton(screenshot, onered, "1");
+        screenshot = FindButton(screenshot, two, "2");
+        screenshot = FindButton(screenshot, twored, "2");
+        screenshot = FindButton(screenshot, three, "3");
+        screenshot = FindButton(screenshot, threered, "3");
+        screenshot = FindButton(screenshot, four, "4");
+        screenshot = FindButton(screenshot, fourred, "4");
+        screenshot = FindButton(screenshot, six, "6");
+        screenshot = FindButton(screenshot, sixred, "6");
+        screenshot = FindButton(screenshot, seven, "7");
+        screenshot = FindButton(screenshot, sevenred, "7");
+        screenshot = FindButton(screenshot, eight, "8");
+        screenshot = FindButton(screenshot, eightred, "8");
+        screenshot = FindButton(screenshot, nine, "9");
+        screenshot = FindButton(screenshot, ninered, "9");
         queueButtons = "";
         for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
             queueButtons += it->second + ";";
@@ -214,26 +221,12 @@ void Screenshot() {
                     buttons.clear();
                     break;
                 }
+                Sleep(1);
             }
         }
-       
-        // Space
-        if (queueButtons.size() == 0) {
-            // Send space
-            int timeNow = (int)std::time(0);
-            if ((perfectPosition - lastSpacePosition < 3 || lastSpacePosition > perfectPosition) && timeNow > lastSpaceTime && lastSpacePosition > 405 && lastSpacePosition < 450) {
-                lastSpaceTime = timeNow;
-                lastSpacePosition = 0;
-                char* charArray2 = new char[3];
-                charArray2[0] = 's';
-                charArray2[1] = ';';
-                charArray2[2] = '\n';
-                arduino.writeSerialPort(charArray2, 3);
-            }
-        }
-
-        // Continue loop img
-        imshow("OpenCV", img);   
+               
+        // Continue loop screenshot
+        //imshow("OpenCV", screenshot);   
         waitKey(1);
     }
 }
@@ -271,21 +264,40 @@ int WinMain(HINSTANCE hInstance,
         return 0;
     }
 
-    //Mat img = imread("lena.jpg");
+    //Mat screenshot = imread("lena.jpg");
     gameId = GetGameProcess(L"Audition.exe");
     gameWindow = FindWindowFromProcessId(gameId);
     
     if (gameId == NULL || gameWindow == NULL) {
+        MessageBoxA(NULL, "Cannot find the game", "Cannot find the game", MB_OK);
         exit(0);
     }
 
-    img = hwnd2mat(gameWindow);
-
-    std::thread ScreenshotThread(Screenshot);
-
+    // Init buttons Mat
+    cvtColor(one, one, COLOR_BGRA2BGR);
+    cvtColor(onered, onered, COLOR_BGRA2BGR);
+    cvtColor(two, two, COLOR_BGRA2BGR);
+    cvtColor(twored, twored, COLOR_BGRA2BGR);
+    cvtColor(three, three, COLOR_BGRA2BGR);
+    cvtColor(threered, threered, COLOR_BGRA2BGR);
+    cvtColor(four, four, COLOR_BGRA2BGR);
+    cvtColor(fourred, fourred, COLOR_BGRA2BGR);
+    cvtColor(six, six, COLOR_BGRA2BGR);
+    cvtColor(sixred, sixred, COLOR_BGRA2BGR);
+    cvtColor(seven, seven, COLOR_BGRA2BGR);
+    cvtColor(sevenred, sevenred, COLOR_BGRA2BGR);
+    cvtColor(eight, eight, COLOR_BGRA2BGR);
+    cvtColor(eightred, eightred, COLOR_BGRA2BGR);
+    cvtColor(nine, nine, COLOR_BGRA2BGR);
+    cvtColor(ninered, ninered, COLOR_BGRA2BGR);
+    cvtColor(space, space, COLOR_BGRA2BGR);
+    
+    // Begin threads
+    std::thread AutoKeyThread(AutoKey);
+    std::thread SpaceThread(Space);
     
 
-
+    // Wating for control keys
     while (arduino.isConnected()) {
 
         if (GetAsyncKeyState(VK_OEM_PLUS) & 1) {
@@ -309,11 +321,10 @@ int WinMain(HINSTANCE hInstance,
 }
 
 
-Mat hwnd2mat(HWND hwnd)
+Mat hwnd2mat(HWND hwnd, int width, int height, int fromX, int fromY)
 {
     HDC hwindowDC, hwindowCompatibleDC;
 
-    int height, width, srcheight, srcwidth;
     HBITMAP hbwindow;
     Mat src;
     BITMAPINFOHEADER  bi;
@@ -324,12 +335,6 @@ Mat hwnd2mat(HWND hwnd)
 
     RECT windowsize;    // get the height and width of the screen
     GetClientRect(hwnd, &windowsize);
-
-    srcheight = windowsize.bottom / 10;
-    srcwidth = windowsize.right * 0.6;
-    height = windowsize.bottom / 10;  //change this to whatever size you want to resize to
-    width = windowsize.right * 0.6;
-
     src.create(height, width, CV_8UC4);
 
     // create a bitmap
@@ -349,7 +354,7 @@ Mat hwnd2mat(HWND hwnd)
     // use the previously created device context with the bitmap
     SelectObject(hwindowCompatibleDC, hbwindow);
     // copy from the window device context to the bitmap device context
-    StretchBlt(hwindowCompatibleDC, 0, 0, width, height, hwindowDC, windowsize.right * 0.2, windowsize.bottom * 0.63, srcwidth, srcheight, SRCCOPY); //change SRCCOPY to NOTSRCCOPY for wacky colors !
+    StretchBlt(hwindowCompatibleDC, 0, 0, width, height, hwindowDC, fromX, fromY, width, height, SRCCOPY); //change SRCCOPY to NOTSRCCOPY for wacky colors !
     GetDIBits(hwindowCompatibleDC, hbwindow, 0, height, src.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);  //copy from hwindowCompatibleDC to hbwindow
 
     // avoid memory leak
