@@ -5,8 +5,10 @@
 
 char output[MAX_DATA_LENGTH];
 char incomingData[MAX_DATA_LENGTH];
-int perfectPosition = 56;
-
+int perfectPosition = 58;
+int startPosition = 20;
+bool nenBam = false;
+bool nenSpace = true;
 // change the name of the port with the port name of your computer
 // must remember that the backslashes are essential so do not remove them
 SerialPort arduino;
@@ -157,21 +159,26 @@ void Space() {
     namedWindow("Space", WINDOW_NORMAL);
    
     while (true) {
+        if (!nenSpace) {
+            Sleep(5);
+            continue;
+        }
         lastSpacePosition = 0;
         screenshot2 = hwnd2mat(gameWindow, 120, 20, 570, 485);
         screenshot2 = FindButton(screenshot2, space, "sl");
         // Send space
         int timeNow = (int)std::time(0);
         if (lastSpacePosition > 10 && lastSpacePosition < 100 &&  (abs(lastSpacePosition - perfectPosition) < 2 || lastSpacePosition  > perfectPosition) && timeNow > lastSpaceTime) {
-            lastSpaceTime = timeNow;
+            std::cout << "Space" << endl;
             lastSpacePosition = 0;
-            char* charArray2 = new char[3];
+            char* charArray2 = new char[2];
             charArray2[0] = 's';
-            charArray2[1] = ';';
-            charArray2[2] = '\n';
-            arduino.writeSerialPort(charArray2, 3);
+            charArray2[1] = '\n';
+            arduino.writeSerialPort(charArray2, 2);
+            lastSpaceTime = (int)std::time(0);
+            nenSpace = false;
         }
-
+        Sleep(1);
         imshow("Space", screenshot2);
         waitKey(1);
     }
@@ -202,27 +209,31 @@ void AutoKey() {
         for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
             queueButtons += it->second + ";";
         }
+
         if (queueButtons.size() > 0) {
-            char* charArray = new char[queueButtons.size() + 1];
+            std::cout << queueButtons << endl;
             // copy(queueButtons.begin(), queueButtons.end(), charArray);
+            nenSpace = false;
             for (int x = 0; x < queueButtons.size(); x++) {
-                charArray[x] = queueButtons[x];
-            }
-            charArray[queueButtons.size()] = '\n';
-            arduino.writeSerialPort(charArray, queueButtons.size() + 1);
+                char* charArray2 = new char[2];
+                charArray2[0] = queueButtons[x];
+                charArray2[1] = '\n';
+                arduino.writeSerialPort(charArray2, 2);
+                int rd = rand() % 30 + 40;
+                Sleep(rd);
 
-
-            while (true) {
-                memset(output, 0, MAX_DATA_LENGTH);
-                arduino.readSerialPort(output, MAX_DATA_LENGTH);
-                string str(output);
-                if (str.find(queueButtons) != std::string::npos) {
-                    queueButtons.clear();
-                    buttons.clear();
-                    break;
+                if (x > 1) {
+                    int previos = x - 2;
+                    if (queueButtons[x] != ';' && queueButtons[x] == queueButtons[previos]) {
+                        Sleep(rand() % 20 + 20); // Baams cham lai do 2 nut khac nhau
+                    }
                 }
-                Sleep(1);
+                int rd2 = rand() % 100;
+                if (rd2 > 96) {
+                    Sleep(rand() % 30 + 70);
+                }
             }
+            nenSpace = true;
         }
                
         // Continue loop screenshot
@@ -232,14 +243,11 @@ void AutoKey() {
 }
 
 
-int WinMain(HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    LPSTR     lpCmdLine,
-    int       nShowCmd)
-    
-//int main()
+// int WinMain(HINSTANCE hInstance,    HINSTANCE hPrevInstance,    LPSTR     lpCmdLine,    int       nShowCmd)    
+int main()
 {
-    string port = "\\\\.\\COM6";
+    std::cout << "Starttttttt" << std::endl;
+    string port = "\\\\.\\COM5";
     ifstream myfile("port.txt");
     if (myfile.is_open())
     {
