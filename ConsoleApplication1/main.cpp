@@ -1,4 +1,4 @@
-// ConsoleApplication1.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// ConsoleApplication1.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include "main.h"
@@ -6,7 +6,7 @@
 char output[MAX_DATA_LENGTH];
 char incomingData[MAX_DATA_LENGTH];
 int perfectPosition = 58;
-int startPosition = 20;
+int startPosition = 5;
 bool nenBam = false;
 bool nenSpace = true;
 // change the name of the port with the port name of your computer
@@ -155,22 +155,25 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
     return ref;
 }
 
+void QuetBi() {
+    return;
+    while (true) {
+       
+        Sleep(1);
+    }
+}
+
 void Space() {
-    namedWindow("Space", WINDOW_NORMAL);
+    //namedWindow("Space", WINDOW_NORMAL);
    
     while (true) {
-        if (!nenSpace) {
-            Sleep(5);
-            continue;
-        }
-        lastSpacePosition = 0;
         screenshot2 = hwnd2mat(gameWindow, 120, 20, 570, 485);
         screenshot2 = FindButton(screenshot2, space, "sl");
         // Send space
         int timeNow = (int)std::time(0);
-        if (lastSpacePosition > 10 && lastSpacePosition < 100 &&  (abs(lastSpacePosition - perfectPosition) < 2 || lastSpacePosition  > perfectPosition) && timeNow > lastSpaceTime) {
-            std::cout << "Space" << endl;
-            lastSpacePosition = 0;
+        if (nenSpace && lastSpacePosition > 40 && lastSpacePosition < 75 && timeNow > lastSpaceTime && lastSpacePosition >= perfectPosition) {
+            std::cout << "Space " << startPosition << " < " <<  lastSpacePosition << endl;
+            //lastSpacePosition = 0;
             char* charArray2 = new char[2];
             charArray2[0] = 's';
             charArray2[1] = '\n';
@@ -179,16 +182,17 @@ void Space() {
             nenSpace = false;
         }
         Sleep(1);
-        imshow("Space", screenshot2);
-        waitKey(1);
+       //imshow("Space", screenshot2);
+        //waitKey(1);
     }
 }
 
 void AutoKey() {
-    //namedWindow("OpenCV", WINDOW_NORMAL);
+   // namedWindow("OpenCV", WINDOW_NORMAL);
     while (true) {
         buttons.clear();
-        screenshot = hwnd2mat(gameWindow, 480, 40, 270, 516);
+        //screenshot = hwnd2mat(gameWindow, 480, 40, 270, 516);
+        screenshot = hwnd2mat(gameWindow, 680, 40, 170, 516);
         screenshot = FindButton(screenshot, one, "1");
         screenshot = FindButton(screenshot, onered, "1");
         screenshot = FindButton(screenshot, two, "2");
@@ -209,8 +213,11 @@ void AutoKey() {
         for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
             queueButtons += it->second + ";";
         }
+       
 
         if (queueButtons.size() > 0) {
+            // Dừng lại nhìn đã rồi hẵng bấm bạn ơi
+            Sleep(rand() % 50 + 100);
             std::cout << queueButtons << endl;
             // copy(queueButtons.begin(), queueButtons.end(), charArray);
             nenSpace = false;
@@ -219,26 +226,28 @@ void AutoKey() {
                 charArray2[0] = queueButtons[x];
                 charArray2[1] = '\n';
                 arduino.writeSerialPort(charArray2, 2);
-                int rd = rand() % 30 + 40;
+                int rd = rand() % 30  + 80 -  2 * queueButtons.size();
                 Sleep(rd);
 
-                if (x > 1) {
-                    int previos = x - 2;
-                    if (queueButtons[x] != ';' && queueButtons[x] == queueButtons[previos]) {
-                        Sleep(rand() % 20 + 20); // Baams cham lai do 2 nut khac nhau
+                if (lastSpacePosition < perfectPosition) {
+                    if (x > 1) {
+                        int previos = x - 2;
+                        if (queueButtons[x] != ';' && queueButtons[x] == queueButtons[previos]) {
+                            Sleep(rand() % 20 + 20); // Baams cham lai do 2 nut khac nhau
+                        }
                     }
-                }
-                int rd2 = rand() % 100;
-                if (rd2 > 96) {
-                    Sleep(rand() % 30 + 70);
+                    int rd2 = rand() % 100;
+                    if (rd2 > 95) {
+                        Sleep(rand() % 30 + 100);
+                    }
                 }
             }
             nenSpace = true;
         }
-               
+        Sleep(1);
         // Continue loop screenshot
         //imshow("OpenCV", screenshot);   
-        waitKey(1);
+        //waitKey(1);
     }
 }
 
@@ -301,6 +310,7 @@ int main()
     cvtColor(space, space, COLOR_BGRA2BGR);
     
     // Begin threads
+    std::thread QuetBiThread(QuetBi);
     std::thread AutoKeyThread(AutoKey);
     std::thread SpaceThread(Space);
     
