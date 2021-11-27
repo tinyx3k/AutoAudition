@@ -5,10 +5,15 @@
 
 char output[MAX_DATA_LENGTH];
 char incomingData[MAX_DATA_LENGTH];
-int perfectPosition = 58;
+int perfectPositionGoc = 57;
+int perfectPosition = 57;
 int startPosition = 5;
+int demBpm = 130;
 bool nenBam = false;
 bool nenSpace = true;
+auto t1 = high_resolution_clock::now();
+auto t2 = high_resolution_clock::now();
+milliseconds ms;
 // change the name of the port with the port name of your computer
 // must remember that the backslashes are essential so do not remove them
 SerialPort arduino;
@@ -167,12 +172,25 @@ void Space() {
     //namedWindow("Space", WINDOW_NORMAL);
    
     while (true) {
+
         screenshot2 = hwnd2mat(gameWindow, 120, 20, 570, 485);
         screenshot2 = FindButton(screenshot2, space, "sl");
+
+        if (lastSpacePosition > 0 && lastSpacePosition < 3) {
+            t1 = high_resolution_clock::now();
+        }
+        if (lastSpacePosition < (perfectPositionGoc + 3) && lastSpacePosition >= perfectPositionGoc) {
+            t2 = high_resolution_clock::now();
+            ms = duration_cast<milliseconds>(t2 - t1);
+           // demBpm = std::max(std::min(176, (int)(750 - ms.count())), 120);
+            demBpm = min(176, max(120, (int)(60000 / ms.count() * 4.3 / 3)));
+            //cout << demBpm << endl;
+        }
+
         // Send space
         int timeNow = (int)std::time(0);
         if (nenSpace && lastSpacePosition > 40 && lastSpacePosition < 75 && timeNow > lastSpaceTime && lastSpacePosition >= perfectPosition) {
-            std::cout << "Space " << startPosition << " < " <<  lastSpacePosition << endl;
+            //std::cout << "Space " << startPosition << " < " <<  lastSpacePosition << endl;
             //lastSpacePosition = 0;
             char* charArray2 = new char[2];
             charArray2[0] = 's';
@@ -180,6 +198,13 @@ void Space() {
             arduino.writeSerialPort(charArray2, 2);
             lastSpaceTime = (int)std::time(0);
             nenSpace = false;
+            if (rand() % 2 == 1) {
+                perfectPosition -= 2;
+                //cout << "Lech er " << endl;
+            }
+            else {
+                perfectPosition = perfectPositionGoc;
+            }
         }
         Sleep(1);
        //imshow("Space", screenshot2);
@@ -190,6 +215,7 @@ void Space() {
 void AutoKey() {
    // namedWindow("OpenCV", WINDOW_NORMAL);
     while (true) {
+        int demGiaNgo = 0;
         buttons.clear();
         //screenshot = hwnd2mat(gameWindow, 480, 40, 270, 516);
         screenshot = hwnd2mat(gameWindow, 680, 40, 170, 516);
@@ -218,7 +244,7 @@ void AutoKey() {
         if (queueButtons.size() > 0) {
             // Dừng lại nhìn đã rồi hẵng bấm bạn ơi
             Sleep(rand() % 50 + 100);
-            std::cout << queueButtons << endl;
+            // std::cout << queueButtons << endl;
             // copy(queueButtons.begin(), queueButtons.end(), charArray);
             nenSpace = false;
             for (int x = 0; x < queueButtons.size(); x++) {
@@ -226,23 +252,32 @@ void AutoKey() {
                 charArray2[0] = queueButtons[x];
                 charArray2[1] = '\n';
                 arduino.writeSerialPort(charArray2, 2);
-                int rd = rand() % 30  + 80 -  2 * queueButtons.size();
+
+                //int rd = rand() % 30 + 200  - demBpm;
+                //int rd = min(60, max(110, (int) (rand() % 30 + 180 - demBpm - queueButtons.size())));
+                int rd = max(45, (int) (rand() % 30 + 210 - demBpm - 2 * queueButtons.size()));
+                //cout << rd << endl;
                 Sleep(rd);
 
-                if (lastSpacePosition < perfectPosition) {
-                    if (x > 1) {
-                        int previos = x - 2;
-                        if (queueButtons[x] != ';' && queueButtons[x] == queueButtons[previos]) {
-                            Sleep(rand() % 20 + 20); // Baams cham lai do 2 nut khac nhau
+                if (x == queueButtons.size() - 1) {
+                    nenSpace = true;
+                }
+                else {
+                    if (x < queueButtons.size() - 3) {
+                        int next = x + 2;
+                        if (queueButtons[x] != ';' && queueButtons[x] == queueButtons[next]) {
+                            Sleep(rand() % 10 + 25); // BẤm cham lai do 2 nut giống nhau
                         }
                     }
+
                     int rd2 = rand() % 100;
-                    if (rd2 > 95) {
-                        Sleep(rand() % 30 + 100);
+                    if (queueButtons.size() > 12 && demGiaNgo < 2 && rd2 > 80 && x < 18 && x > 6) {
+                        //cout << "Gia ngo " << lastSpacePosition << endl;
+                        demGiaNgo++;
+                        Sleep(rand() % 30 + 120);
                     }
                 }
             }
-            nenSpace = true;
         }
         Sleep(1);
         // Continue loop screenshot
@@ -252,10 +287,10 @@ void AutoKey() {
 }
 
 
-// int WinMain(HINSTANCE hInstance,    HINSTANCE hPrevInstance,    LPSTR     lpCmdLine,    int       nShowCmd)    
+//int WinMain(HINSTANCE hInstance,    HINSTANCE hPrevInstance,    LPSTR     lpCmdLine,    int       nShowCmd)    
 int main()
 {
-    std::cout << "Starttttttt" << std::endl;
+    //std::cout << "Starttttttt" << std::endl;
     string port = "\\\\.\\COM5";
     ifstream myfile("port.txt");
     if (myfile.is_open())
@@ -264,20 +299,20 @@ int main()
         myfile.close();
     }
     else {
-        MessageBoxA(NULL, "Cannot find port.txt", "Cannot find port.txt", MB_OK);
+        //MessageBoxA(NULL, "Cannot find port.txt", "Cannot find port.txt", MB_OK);
         exit(0);
     }
 
     arduino.Init(port);
 
     if (arduino.isConnected()) {
-        cout << "Connection made" << endl << endl;
+        //cout << "Connection made" << endl << endl;
     }
     else {
 
        // cout << "Error in port name" << endl << endl;
        // cin.get();
-        MessageBoxA(NULL, "Cannot connect to port", "Cannot connect to port", MB_OK);
+        //MessageBoxA(NULL, "Cannot connect to port", "Cannot connect to port", MB_OK);
         return 0;
     }
 
@@ -286,7 +321,7 @@ int main()
     gameWindow = FindWindowFromProcessId(gameId);
     
     if (gameId == NULL || gameWindow == NULL) {
-        MessageBoxA(NULL, "Cannot find the game", "Cannot find the game", MB_OK);
+        //MessageBoxA(NULL, "Cannot find the game", "Cannot find the game", MB_OK);
         exit(0);
     }
 
@@ -320,12 +355,12 @@ int main()
 
         if (GetAsyncKeyState(VK_OEM_PLUS) & 1) {
             perfectPosition += 1;
-            std::cout << "Perfect position +: " << perfectPosition << std::endl;
+            //std::cout << "Perfect position +: " << perfectPosition << std::endl;
         }
 
         if (GetAsyncKeyState(VK_OEM_MINUS) & 1) {
             perfectPosition -= 1;
-            std::cout << "Perfect position -: " << perfectPosition << std::endl;
+            //std::cout << "Perfect position -: " << perfectPosition << std::endl;
         }
 
         if (GetAsyncKeyState(VK_F12)) {
