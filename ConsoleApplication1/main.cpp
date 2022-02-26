@@ -9,10 +9,18 @@ int perfectPositionGoc = 57;
 int perfectPosition = 57;
 int startPosition = 5;
 int demBpm = 130;
+int tocDoBam = 220;
+int mucDoPer = 3;
+int level = 6;
+int perXMax = 3;
 bool nenBam = false;
 bool nenSpace = true;
 auto t1 = high_resolution_clock::now();
 auto t2 = high_resolution_clock::now();
+bool autoKeyOn = true;
+bool autoSpaceOn = true;
+int demPer = 0;
+
 milliseconds ms;
 // change the name of the port with the port name of your computer
 // must remember that the backslashes are essential so do not remove them
@@ -168,10 +176,19 @@ void QuetBi() {
     }
 }
 
+void stt() {
+    std::cout << "ON/OFF: " << autoSpaceOn << ". Nhac: " << demBpm << ". Ti le per " << (int)(100 / mucDoPer) << " %. Per toi da x" << perXMax << ". Next space : " << (perfectPosition - perfectPositionGoc) << endl;
+}
+
 void Space() {
-    //namedWindow("Space", WINDOW_NORMAL);
-   
+   // return;
+        //namedWindow("Space", WINDOW_NORMAL);
     while (true) {
+
+        if (!autoSpaceOn) {
+            Sleep(1);
+            continue;
+        }
 
         screenshot2 = hwnd2mat(gameWindow, 120, 20, 570, 485);
         screenshot2 = FindButton(screenshot2, space, "sl");
@@ -183,7 +200,7 @@ void Space() {
             t2 = high_resolution_clock::now();
             ms = duration_cast<milliseconds>(t2 - t1);
            // demBpm = std::max(std::min(176, (int)(750 - ms.count())), 120);
-            demBpm = min(176, max(120, (int)(60000 / ms.count() * 4.3 / 3)));
+            demBpm = min(220, max(80, (int)(60000 / ms.count() * 1.48)));
             //cout << demBpm << endl;
         }
 
@@ -192,19 +209,31 @@ void Space() {
         if (nenSpace && lastSpacePosition > 40 && lastSpacePosition < 75 && timeNow > lastSpaceTime && lastSpacePosition >= perfectPosition) {
             //std::cout << "Space " << startPosition << " < " <<  lastSpacePosition << endl;
             //lastSpacePosition = 0;
+            
             char* charArray2 = new char[2];
             charArray2[0] = 's';
             charArray2[1] = '\n';
             arduino.writeSerialPort(charArray2, 2);
             lastSpaceTime = (int)std::time(0);
             nenSpace = false;
-            if (rand() % 2 == 1) {
-                perfectPosition -= 2;
-                //cout << "Lech er " << endl;
+
+            //perfectPosition = perfectPositionGoc - rand() % 3 - 2;
+            if ((mucDoPer == 1 || rand() % mucDoPer == 1) && demPer < perXMax) {
+                perfectPosition = perfectPositionGoc;
+                demPer++;
             }
             else {
-                perfectPosition = perfectPositionGoc;
+                int lechPer = 0;
+                while (lechPer == 0) {
+                    lechPer = 3 - rand() % 4;
+                }
+                perfectPosition = perfectPositionGoc + lechPer;
+                demPer = 0;
+                stt();
             }
+            
+            //perfectPosition = perfectPositionGoc + 1 - rand() % 2;
+           // perfectPosition = perfectPositionGoc;
         }
         Sleep(1);
        //imshow("Space", screenshot2);
@@ -212,70 +241,99 @@ void Space() {
     }
 }
 
+
 void AutoKey() {
    // namedWindow("OpenCV", WINDOW_NORMAL);
     while (true) {
+        if (!autoKeyOn) {
+            Sleep(1);
+            continue;
+        }
         int demGiaNgo = 0;
         buttons.clear();
         //screenshot = hwnd2mat(gameWindow, 480, 40, 270, 516);
-        screenshot = hwnd2mat(gameWindow, 680, 40, 170, 516);
-        screenshot = FindButton(screenshot, one, "1");
-        screenshot = FindButton(screenshot, onered, "1");
-        screenshot = FindButton(screenshot, two, "2");
-        screenshot = FindButton(screenshot, twored, "2");
-        screenshot = FindButton(screenshot, three, "3");
-        screenshot = FindButton(screenshot, threered, "3");
-        screenshot = FindButton(screenshot, four, "4");
-        screenshot = FindButton(screenshot, fourred, "4");
-        screenshot = FindButton(screenshot, six, "6");
-        screenshot = FindButton(screenshot, sixred, "6");
-        screenshot = FindButton(screenshot, seven, "7");
-        screenshot = FindButton(screenshot, sevenred, "7");
-        screenshot = FindButton(screenshot, eight, "8");
-        screenshot = FindButton(screenshot, eightred, "8");
-        screenshot = FindButton(screenshot, nine, "9");
-        screenshot = FindButton(screenshot, ninered, "9");
+        screenshot = hwnd2mat(gameWindow, 800, 40, 120, 516);
+        screenshot = FindButton(screenshot, one, "1b");
+        screenshot = FindButton(screenshot, onered, "1r");
+        screenshot = FindButton(screenshot, two, "2b");
+        screenshot = FindButton(screenshot, twored, "2r");
+        screenshot = FindButton(screenshot, three, "3b");
+        screenshot = FindButton(screenshot, threered, "3r");
+        screenshot = FindButton(screenshot, four, "4b");
+        screenshot = FindButton(screenshot, fourred, "4r");
+        screenshot = FindButton(screenshot, six, "6b");
+        screenshot = FindButton(screenshot, sixred, "6r");
+        screenshot = FindButton(screenshot, seven, "7b");
+        screenshot = FindButton(screenshot, sevenred, "7r");
+        screenshot = FindButton(screenshot, eight, "8b");
+        screenshot = FindButton(screenshot, eightred, "8r");
+        screenshot = FindButton(screenshot, nine, "9b");
+        screenshot = FindButton(screenshot, ninered, "9r");
         queueButtons = "";
         for (std::map<int, string>::iterator it = buttons.begin(); it != buttons.end(); ++it) {
             queueButtons += it->second + ";";
         }
        
-
-        if (queueButtons.size() > 0) {
+        level = queueButtons.size() / 3;
+        if (level > 0) {
             // Dừng lại nhìn đã rồi hẵng bấm bạn ơi
-            Sleep(rand() % 50 + 100);
+            Sleep(max(20, (rand() % 30 + tocDoBam - demBpm)));
             // std::cout << queueButtons << endl;
             // copy(queueButtons.begin(), queueButtons.end(), charArray);
             nenSpace = false;
-            for (int x = 0; x < queueButtons.size(); x++) {
+            for (int x = 0; x < level; x++) {
+                if (x >= level - 1) {
+                    nenSpace = true;
+                }
+
+                char huongMuiTen = queueButtons[x * 3 + 1];
+                char nutBam = queueButtons[x * 3];
+
+                if (huongMuiTen == 'r') {
+                    Sleep(max(20, (rand() % 20 + tocDoBam - demBpm)));
+                }
+
                 char* charArray2 = new char[2];
-                charArray2[0] = queueButtons[x];
+                charArray2[0] = nutBam;
                 charArray2[1] = '\n';
                 arduino.writeSerialPort(charArray2, 2);
 
+
                 //int rd = rand() % 30 + 200  - demBpm;
                 //int rd = min(60, max(110, (int) (rand() % 30 + 180 - demBpm - queueButtons.size())));
-                int rd = max(45, (int) (rand() % 30 + 210 - demBpm - 2 * queueButtons.size()));
-                //cout << rd << endl;
+                int rd = min(120 + rand() % 10, max(65 + rand() % 10, (int)(rand() % 20 + 50 + tocDoBam - demBpm - 2 * level)));
+                //std::cout << "Toc do bam " << rd << endl;
                 Sleep(rd);
 
-                if (x == queueButtons.size() - 1) {
-                    nenSpace = true;
-                }
-                else {
-                    if (x < queueButtons.size() - 3) {
-                        int next = x + 2;
-                        if (queueButtons[x] != ';' && queueButtons[x] == queueButtons[next]) {
-                            Sleep(rand() % 10 + 25); // BẤm cham lai do 2 nut giống nhau
-                        }
-                    }
 
-                    int rd2 = rand() % 100;
-                    if (queueButtons.size() > 12 && demGiaNgo < 2 && rd2 > 80 && x < 18 && x > 6) {
-                        //cout << "Gia ngo " << lastSpacePosition << endl;
-                        demGiaNgo++;
-                        Sleep(rand() % 30 + 120);
+                // Bam cham neu 2 nut lien tiep giong nhau
+                if (x < level - 2) {
+                    int next = x * 2 + 1;
+                    if (queueButtons[x] == queueButtons[next]) {
+                        Sleep(rand() % 10 + 70 - demBpm / 4);
                     }
+                    if ((queueButtons[x] == '2' == queueButtons[next] == '8') || (queueButtons[x] == '8' == queueButtons[next] == '2')) {
+                        Sleep(rand() % 10 + 70 - demBpm / 4);
+                    }
+                }
+
+                // Giả ngố, thi thoảng bấm chậm lại
+                int rd2 = rand() % 100;
+                if (demGiaNgo < 1 && rd2 > 90 && x < 11 && x > 4) {
+                    demGiaNgo++;
+                    Sleep(rand() % 20 + 90 - demBpm / 4);
+                    //std::cout << "Gia ngo" << endl;
+                }
+                
+                // Thi thoảng miss 1 cái
+                int rd3 = rand() % (550 - demBpm * 2);
+                //int rd3 = 0;
+                if (rd3 == 50) {
+                    char* charArray3 = new char[2];
+                    charArray3[0] = queueButtons[x];
+                    charArray2[1] = '\n';
+                    arduino.writeSerialPort(charArray3, 2);
+                    //std::cout << "Miss han" << endl;
                 }
             }
         }
@@ -354,19 +412,39 @@ int main()
     while (arduino.isConnected()) {
 
         if (GetAsyncKeyState(VK_OEM_PLUS) & 1) {
-            perfectPosition += 1;
-            //std::cout << "Perfect position +: " << perfectPosition << std::endl;
+            perXMax += 1;
+            stt();
         }
 
         if (GetAsyncKeyState(VK_OEM_MINUS) & 1) {
-            perfectPosition -= 1;
-            //std::cout << "Perfect position -: " << perfectPosition << std::endl;
+            perXMax -= 1;
+            stt();
         }
 
-        if (GetAsyncKeyState(VK_F12)) {
+        if (GetAsyncKeyState(VK_F12) & 1) {
             exit(0);
             ExitProcess(0);
         }
+
+        if (GetAsyncKeyState(VK_F9) & 1) {
+            if (mucDoPer == 1) {
+                std::cout << "Khong the giam nua. Muc hien tai: " << mucDoPer << std::endl;
+            }
+            else {
+                mucDoPer--;
+                stt();
+            }
+        }
+
+        if (GetAsyncKeyState(VK_F10) & 1) {
+            mucDoPer++;
+            stt();
+        }
+        if (GetAsyncKeyState(VK_F11) & 1) {
+            autoKeyOn = !autoKeyOn;
+            stt();
+        }
+
         Sleep(100);
     }
     
