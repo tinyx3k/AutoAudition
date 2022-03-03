@@ -9,16 +9,18 @@ int perfectPositionGoc = 57;
 int perfectPosition = 57;
 int startPosition = 5;
 int demBpm = 130;
-int tocDoBam = 220;
-int mucDoPer = 3;
+int tocDoBam = 210;
+int mucDoPer = 2;
 int level = 6;
-int perXMax = 3;
+int perXMax = 5;
 bool nenBam = false;
 bool nenSpace = true;
 auto t1 = high_resolution_clock::now();
 auto t2 = high_resolution_clock::now();
 bool autoKeyOn = true;
 bool autoSpaceOn = true;
+bool autoSS = false;
+bool waitingForSS = false;
 int demPer = 0;
 
 milliseconds ms;
@@ -45,7 +47,9 @@ Mat eightred = imread("btn/8d.png", -1);
 Mat nine = imread("btn/9.png", -1);
 Mat ninered = imread("btn/9d.png", -1);
 Mat space = imread("btn/space.png", -1);
-Mat screenshot, screenshot2;
+Mat notice = imread("btn/notice.png", -1);
+
+Mat screenshot, screenshot2, screenAutoSS;
 
 int lastSpacePosition, lastSpaceTime;
 
@@ -67,9 +71,15 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
         double minval, maxval, threshold = 0.96;
         if (btn == "sl") {
             line(ref, cv::Point(perfectPosition, 3), cv::Point(perfectPosition, 17), CV_RGB(255, 0, 0), 2, 8, 0);
-            minval = 0.6; 
+            minval = 0.6;
             maxval = 1;
             threshold = 0.6;
+        }
+
+        if (btn == "notice") {
+            minval = 0.7;
+            maxval = 1;
+            threshold = 0.9;
         }
        
        
@@ -152,12 +162,12 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
                 );
             }
             
-            if (btn != "sl") {
+            if (btn != "sl" && btn != "notice") {
                 buttons[maxloc.x] = btn;
-            }
-
-            if (btn == "sl") {
+            } else if (btn == "sl") {
                 lastSpacePosition = maxloc.x;
+            } else if (btn == "notice") {
+                waitingForSS = maxloc.x;
             }
           
             floodFill(res, maxloc, Scalar(0), 0, Scalar(.1), Scalar(1.));
@@ -177,7 +187,7 @@ void QuetBi() {
 }
 
 void stt() {
-    std::cout << "ON/OFF: " << autoSpaceOn << ". Nhac: " << demBpm << ". Ti le per " << (int)(100 / mucDoPer) << " %. Per toi da x" << perXMax << ". Next space : " << (perfectPosition - perfectPositionGoc) << endl;
+    std::cout << "ON: " << autoSpaceOn << ". BPM: " << demBpm << ". Per: " << (int)(100 / mucDoPer) << "%. MaxX: " << perXMax << ". Next: " << (perfectPosition - perfectPositionGoc) << ". Auto F1: " << autoSS << endl;
 }
 
 void Space() {
@@ -252,7 +262,7 @@ void AutoKey() {
         int demGiaNgo = 0;
         buttons.clear();
         //screenshot = hwnd2mat(gameWindow, 480, 40, 270, 516);
-        screenshot = hwnd2mat(gameWindow, 800, 40, 120, 516);
+        screenshot = hwnd2mat(gameWindow, 900, 40, 120, 516);
         screenshot = FindButton(screenshot, one, "1b");
         screenshot = FindButton(screenshot, onered, "1r");
         screenshot = FindButton(screenshot, two, "2b");
@@ -290,7 +300,7 @@ void AutoKey() {
                 char nutBam = queueButtons[x * 3];
 
                 if (huongMuiTen == 'r') {
-                    Sleep(max(20, (rand() % 20 + tocDoBam - demBpm)));
+                    //Sleep(max(20, (rand() % 20 + tocDoBam - demBpm)));
                 }
 
                 char* charArray2 = new char[2];
@@ -326,12 +336,12 @@ void AutoKey() {
                 }
                 
                 // Thi thoảng miss 1 cái
-                int rd3 = rand() % (550 - demBpm * 2);
-                //int rd3 = 0;
+                //int rd3 = rand() % (550 - demBpm * 2);
+                int rd3 = 0;
                 if (rd3 == 50) {
                     char* charArray3 = new char[2];
                     charArray3[0] = queueButtons[x];
-                    charArray2[1] = '\n';
+                    charArray3[1] = '\n';
                     arduino.writeSerialPort(charArray3, 2);
                     //std::cout << "Miss han" << endl;
                 }
@@ -344,6 +354,25 @@ void AutoKey() {
     }
 }
 
+void AutoSS() {
+    //namedWindow("OpenCV", WINDOW_NORMAL);
+    while (true) {
+        if (autoSS) {
+            waitingForSS = 0;
+            screenAutoSS = hwnd2mat(gameWindow, 90, 30, 0, 580);
+            screenAutoSS = FindButton(screenAutoSS, notice, "notice");
+            if (waitingForSS > 0) {
+                char* charArray = new char[2];
+                charArray[0] = 'f';
+                charArray[1] = '\n';
+                arduino.writeSerialPort(charArray, 2);
+            }
+        }
+        Sleep(4000 + rand() % 3 * 1000);
+        //imshow("OpenCV", screenAutoSS);
+        //waitKey(1);
+    }
+}
 
 //int WinMain(HINSTANCE hInstance,    HINSTANCE hPrevInstance,    LPSTR     lpCmdLine,    int       nShowCmd)    
 int main()
@@ -380,7 +409,11 @@ int main()
     
     if (gameId == NULL || gameWindow == NULL) {
         //MessageBoxA(NULL, "Cannot find the game", "Cannot find the game", MB_OK);
-        exit(0);
+        gameId = GetGameProcess(L"Aubiz.exe");
+        gameWindow = FindWindowFromProcessId(gameId);
+        if (gameId == NULL || gameWindow == NULL) {
+            exit(0);
+        }
     }
 
     // Init buttons Mat
@@ -403,10 +436,10 @@ int main()
     cvtColor(space, space, COLOR_BGRA2BGR);
     
     // Begin threads
-    std::thread QuetBiThread(QuetBi);
+    //std::thread QuetBiThread(QuetBi);
     std::thread AutoKeyThread(AutoKey);
     std::thread SpaceThread(Space);
-    
+    std::thread AutoSSThread(AutoSS);
 
     // Wating for control keys
     while (arduino.isConnected()) {
@@ -425,6 +458,11 @@ int main()
             exit(0);
             ExitProcess(0);
         }
+
+        if (GetAsyncKeyState(VK_F8) & 1) {
+            autoSS = !autoSS;
+        }
+
 
         if (GetAsyncKeyState(VK_F9) & 1) {
             if (mucDoPer == 1) {
