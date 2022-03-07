@@ -45,111 +45,162 @@
 #define KEY_F12        0xCD
 
 void setup() {
-  Serial.begin(9600);
+    Serial.begin(9600);
 }
-
-void one() {
-  Keyboard.press(KEY_NUMPAD_1);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_1);
-}
-
-void two() {
-  Keyboard.press(KEY_NUMPAD_2);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_2);
-}
-
-void three() {
-  Keyboard.press(KEY_NUMPAD_3);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_3);
-}
-
-void four() {
-  Keyboard.press(KEY_NUMPAD_4);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_4);
-}
-
-void six() {
-  Keyboard.press(KEY_NUMPAD_6);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_6);
+void f1() {
+    Keyboard.press(KEY_F1);
+    delay(55);
+   // Keyboard.release(KEY_F1);
+   Keyboard.releaseAll();
 }
 
 
-void seven() {
-  Keyboard.press(KEY_NUMPAD_7);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_7);
+void one(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_1);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_1);
+    Keyboard.releaseAll();
+}
+
+void two(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_2);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_2);
+    Keyboard.releaseAll();
+}
+
+void three(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_3);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_3);
+    Keyboard.releaseAll();
+}
+
+void four(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_4);
+    delay(SleepTime);
+   // Keyboard.release(KEY_NUMPAD_4);
+   Keyboard.releaseAll();
+}
+
+void five(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_5);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_5);
+    Keyboard.releaseAll();
+}
+void six(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_6);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_6);
+    Keyboard.releaseAll();
 }
 
 
-void eight() {
-  Keyboard.press(KEY_NUMPAD_8);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_8);
+void seven(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_7);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_7);
+    Keyboard.releaseAll();
 }
 
-void nine() {
-  Keyboard.press(KEY_NUMPAD_9);
-  delay(50);
-  Keyboard.release(KEY_NUMPAD_9);
+
+void eight(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_8);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_8);
+    Keyboard.releaseAll();
+}
+
+void nine(int SleepTime) {
+    Keyboard.press(KEY_NUMPAD_9);
+    delay(SleepTime);
+    //Keyboard.release(KEY_NUMPAD_9);
+    Keyboard.releaseAll();
 }
 
 void space() {
-  Keyboard.press(KEY_CTRL);
-  delay(30);
-  Keyboard.release(KEY_CTRL);
+    Keyboard.press(KEY_CTRL);
+    delay(25);
+    Keyboard.releaseAll();
+}
+
+void del() {
+    Keyboard.press(KEY_END);
+    delay(50);
+    Keyboard.releaseAll();
 }
 
 void loop()
 {
-  if(Serial.available() > 0) {
-    String info = Serial.readStringUntil('\n');  
-    char buf[sizeof(info)];
-    info.toCharArray(buf, sizeof(buf));
-    char *p = buf;
-    char *s;
-    int delayTime = 25;
-    while ((s = strtok_r(p, ";", &p)) != NULL) {
-      String str(s);
-      if(str == "1") {
-        one();
-        delay(delayTime);
-      } else if(str == "2") {
-        two();
-        delay(delayTime);
-      }
-      else if(str == "3") {
-        three();
-        delay(delayTime);
-      }
-       else if(str == "4") {
-        four();
-        delay(delayTime);
-      }
-      else if(str == "6") {
-        six();
-        delay(delayTime);
-      }
-      else if(str == "7") {
-        seven();
-        delay(delayTime);
-      }
-      else if(str == "8") {
-        eight();
-        delay(delayTime);
-      }
-      else if(str == "9") {
-        nine();
-        delay(delayTime);
-      } else if(str == "s") {
-        space();
-      }
+    if (Serial.available() > 0) {
+        String str = Serial.readStringUntil('\n');
+        int SleepTime = 55;
+        int SleepTimex2 = 100;
+        
+        if (str == "1") {
+            one(SleepTime);
+        }
+        else if (str == "2") {
+            two(SleepTime);
+        }
+        else if (str == "3") {
+            three(SleepTime);
+        }
+        else if (str == "4") {
+            four(SleepTime);
+        }
+        else if (str == "5") {
+            five(SleepTime);
+        }
+        else if (str == "6") {
+            six(SleepTime);
+        }
+        else if (str == "7") {
+            seven(SleepTime);
+        }
+        else if (str == "8") {
+            eight(SleepTime);
+        }
+        else if (str == "9") {
+            nine(SleepTime);
+        } 
+        else if (str == "12") {
+            one(SleepTimex2);
+        }
+        else if (str == "22") {
+            two(SleepTimex2);
+        }
+        else if (str == "32") {
+            three(SleepTimex2);
+        }
+        else if (str == "42") {
+            four(SleepTimex2);
+        }
+        else if (str == "62") {
+            six(SleepTimex2);
+        } else if (str == "52") {
+            five(SleepTimex2);
+        }
+        else if (str == "72") {
+            seven(SleepTimex2);
+        }
+        else if (str == "82") {
+            eight(SleepTimex2);
+        }
+        else if (str == "92") {
+            nine(SleepTimex2);
+        }
+        else if (str == "s") {
+            space();
+        }
+        else if (str == "f") { // F1
+          f1();
+        }
+         else if (str == "d") { // End
+          del();
+        }
+        
+        // Serial.println(str);
     }
-    Serial.println(info);
-  }
-  delay(1);
 }

@@ -9,8 +9,8 @@ int perfectPositionGoc = 57;
 int perfectPosition = 57;
 int startPosition = 5;
 int demBpm = 130;
-int tocDoBam = 210;
-int mucDoPer = 2;
+int tocDoBam = 190;
+float mucDoPer = 1.4;
 int level = 6;
 int perXMax = 5;
 bool nenBam = false;
@@ -187,7 +187,7 @@ void QuetBi() {
 }
 
 void stt() {
-    std::cout << "ON: " << autoSpaceOn << ". BPM: " << demBpm << ". Per: " << (int)(100 / mucDoPer) << "%. MaxX: " << perXMax << ". Next: " << (perfectPosition - perfectPositionGoc) << ". Auto F1: " << autoSS << endl;
+    std::cout << "ON: " << autoKeyOn << ". X" << (demPer-1) << ". BPM: " << demBpm << ". Per : " << (int)(100 / mucDoPer) << "%. MaxX: " << perXMax << ". Next: " << (perfectPosition - perfectPositionGoc) << ". Auto F1 : " << autoSS << endl;
 }
 
 void Space() {
@@ -227,8 +227,13 @@ void Space() {
             lastSpaceTime = (int)std::time(0);
             nenSpace = false;
 
+            if (lastSpacePosition != perfectPositionGoc) {
+                std::cout << lastSpacePosition << endl;
+                demPer = 0;
+            }
+
             //perfectPosition = perfectPositionGoc - rand() % 3 - 2;
-            if ((mucDoPer == 1 || rand() % mucDoPer == 1) && demPer < perXMax) {
+            if ((mucDoPer == 1 || rand() % 100 < (100 / mucDoPer)) && demPer < perXMax + rand() % 2) {
                 perfectPosition = perfectPositionGoc;
                 demPer++;
             }
@@ -239,11 +244,11 @@ void Space() {
                 }
                 perfectPosition = perfectPositionGoc + lechPer;
                 demPer = 0;
+                stt();
             }
             
             //perfectPosition = perfectPositionGoc + 1 - rand() % 2;
            // perfectPosition = perfectPositionGoc;
-            stt();
         }
         Sleep(1);
        //imshow("Space", screenshot2);
@@ -311,7 +316,7 @@ void AutoKey() {
 
                 //int rd = rand() % 30 + 200  - demBpm;
                 //int rd = min(60, max(110, (int) (rand() % 30 + 180 - demBpm - queueButtons.size())));
-                int rd = min(120 + rand() % 10, max(60 + rand() % 10, (int)(rand() % 20 + 50 + tocDoBam - demBpm - 2.5 * level)));
+                int rd = min(120 + rand() % 10, max(50 + rand() % 10, (int)(rand() % 20 + 50 + tocDoBam - demBpm - 2.5 * level)));
                 //std::cout << "Toc do bam " << rd << endl;
                 Sleep(rd);
 
@@ -469,13 +474,13 @@ int main()
                 std::cout << "Khong the giam nua. Muc hien tai: " << mucDoPer << std::endl;
             }
             else {
-                mucDoPer--;
+                mucDoPer -= 0.2;
                 stt();
             }
         }
 
         if (GetAsyncKeyState(VK_F10) & 1) {
-            mucDoPer++;
+            mucDoPer += 0.2;
             stt();
         }
         if (GetAsyncKeyState(VK_F11) & 1) {
