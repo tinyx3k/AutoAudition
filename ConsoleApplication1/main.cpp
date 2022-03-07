@@ -239,11 +239,11 @@ void Space() {
                 }
                 perfectPosition = perfectPositionGoc + lechPer;
                 demPer = 0;
-                stt();
             }
             
             //perfectPosition = perfectPositionGoc + 1 - rand() % 2;
            // perfectPosition = perfectPositionGoc;
+            stt();
         }
         Sleep(1);
        //imshow("Space", screenshot2);
@@ -311,13 +311,13 @@ void AutoKey() {
 
                 //int rd = rand() % 30 + 200  - demBpm;
                 //int rd = min(60, max(110, (int) (rand() % 30 + 180 - demBpm - queueButtons.size())));
-                int rd = min(120 + rand() % 10, max(65 + rand() % 10, (int)(rand() % 20 + 50 + tocDoBam - demBpm - 2 * level)));
+                int rd = min(120 + rand() % 10, max(60 + rand() % 10, (int)(rand() % 20 + 50 + tocDoBam - demBpm - 2.5 * level)));
                 //std::cout << "Toc do bam " << rd << endl;
                 Sleep(rd);
 
 
                 // Bam cham neu 2 nut lien tiep giong nhau
-                if (x < level - 2) {
+                if (x < level - 6) {
                     int next = x * 2 + 1;
                     if (queueButtons[x] == queueButtons[next]) {
                         Sleep(rand() % 10 + 70 - demBpm / 4);
