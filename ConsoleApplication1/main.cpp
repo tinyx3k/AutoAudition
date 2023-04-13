@@ -5,23 +5,25 @@
 
 char output[MAX_DATA_LENGTH];
 char incomingData[MAX_DATA_LENGTH];
-int perfectPositionGoc = 57;
-int perfectPosition = 57;
+int perfectPositionGoc = 27;
+int perfectPosition = 27;
 int startPosition = 5;
-int demBpm = 130;
-int tocDoBam = 190;
-float mucDoPer = 1.4;
+int demBpm = 230;
+int tocDoBam = 80;
+float mucDoPer = 1;
 int level = 6;
-int perXMax = 5;
+int perXMax = 500;
 bool nenBam = false;
 bool nenSpace = true;
 auto t1 = high_resolution_clock::now();
 auto t2 = high_resolution_clock::now();
 bool autoKeyOn = true;
 bool autoSpaceOn = true;
-bool autoSS = false;
+bool autoSS = true;
 bool waitingForSS = false;
 int demPer = 0;
+int countSS = 0;
+int minPlayer = 1;
 
 milliseconds ms;
 // change the name of the port with the port name of your computer
@@ -48,8 +50,10 @@ Mat nine = imread("btn/9.png", -1);
 Mat ninered = imread("btn/9d.png", -1);
 Mat space = imread("btn/space.png", -1);
 Mat notice = imread("btn/notice.png", -1);
+Mat ss = imread("btn/ss.png", -1);
+//Mat sc = imread("btn/sc.png", -1);
 
-Mat screenshot, screenshot2, screenAutoSS;
+Mat screenshot, screenshot2, screenAutoSS, screenCountReady;
 
 int lastSpacePosition, lastSpaceTime;
 
@@ -75,6 +79,11 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
             maxval = 1;
             threshold = 0.6;
         }
+        if (btn == "ss") {
+            minval = 0.8;
+            maxval = 1;
+            threshold = 0.8;
+        }
 
         if (btn == "notice") {
             minval = 0.7;
@@ -88,135 +97,131 @@ Mat FindButton(Mat ref, Mat tpl, string btn) {
         minMaxLoc(res, &minval, &maxval, &minloc, &maxloc);
 
         if (maxval >= threshold)
-        {
-            if (btn == "1") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(255, 255, 0), 2
-                );
-            }
-            else if (btn == "2") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(255, 255, 255), 2
-                );
-            }
-            else if (btn == "3") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(0, 255, 255), 2
-                );
-            }
-            else if (btn == "4") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(0, 0, 0), 2
-                );
-            }
-            else if (btn == "6") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(125, 255, 0), 2
-                );
-            }
-            else if (btn == "7") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(0, 125, 125), 2
-                );
-            }
-            else if (btn == "8") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(125, 0, 125), 2
-                );
-            }
-            else if (btn == "9") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(100, 178, 230), 2
-                );
-            }
-            else if (btn == "sl") {
-                rectangle(
-                    ref,
-                    maxloc,
-                    Point(maxloc.x + tpl.cols, maxloc.y + tpl.rows),
-                    CV_RGB(255, 255, 0), 2
-                );
-            }
-            
-            if (btn != "sl" && btn != "notice") {
-                buttons[maxloc.x] = btn;
-            } else if (btn == "sl") {
+        {            
+            if (btn == "sl") {
                 lastSpacePosition = maxloc.x;
+               
             } else if (btn == "notice") {
                 waitingForSS = maxloc.x;
             }
-          
+            else if (btn == "ss") {
+                line(ref, cv::Point(maxloc.x, maxloc.y), cv::Point(maxloc.x, maxloc.y + 10), CV_RGB(255, 0, 0), 2, 8, 0);
+                countSS++;
+            }
+            else {
+                buttons[maxloc.x] = btn;
+            }
+
             floodFill(res, maxloc, Scalar(0), 0, Scalar(.1), Scalar(1.));
-        }
-        else
+        } else
             break;
     }
     return ref;
-}
-
-void QuetBi() {
-    return;
-    while (true) {
-       
-        Sleep(1);
-    }
 }
 
 void stt() {
     std::cout << "ON: " << autoKeyOn << ". X" << (demPer-1) << ". BPM: " << demBpm << ". Per : " << (int)(100 / mucDoPer) << "%. MaxX: " << perXMax << ". Next: " << (perfectPosition - perfectPositionGoc) << ". Auto F1 : " << autoSS << endl;
 }
 
-void Space() {
-   // return;
-        //namedWindow("Space", WINDOW_NORMAL);
-    while (true) {
 
-        if (!autoSpaceOn) {
+
+void SendChat(std::string str, bool sendEnter) {
+    str += "\n";
+    int length = str.length();
+    char* charArray = new char[length + 1];
+    strcpy_s(charArray, length + 1, str.c_str());
+    arduino.writeSerialPort(charArray, length);
+
+    if (sendEnter) {
+        SendChat("enter", false);
+    }
+}
+
+float FindImage(Mat bigImage, Mat templateImage, double minval, double maxval, double threshold) {
+    Mat gref;
+    cvtColor(bigImage, gref, COLOR_BGRA2BGR);
+
+    Mat res(bigImage.rows - templateImage.rows + 1, bigImage.cols - templateImage.cols + 1, CV_32FC1);
+    matchTemplate(gref, templateImage, res, TM_CCOEFF_NORMED);
+
+    Point minloc, maxloc;
+    minMaxLoc(res, &minval, &maxval, &minloc, &maxloc);
+
+    if (maxval >= threshold)
+    {
+        floodFill(res, maxloc, Scalar(0), 0, Scalar(.1), Scalar(1.));
+        return maxloc.x;
+    }
+    return 0;
+}
+
+void AutoSpace100() {
+    Mat spaceSceenshot;
+    int lastSpaceTime = 0, timeNow = 0;
+    while (true) {
+        timeNow = (int)std::time(0);
+        if (timeNow <= lastSpaceTime) {
             Sleep(1);
             continue;
         }
+        float start = std::time(0);
+        spaceSceenshot = hwnd2mat(gameWindow, 60, 20, 600, 485);
+        float spacePositionX = FindImage(spaceSceenshot, space, 0.6, 1.0, 0.6);
+        float stop = std::time(0);
 
-        screenshot2 = hwnd2mat(gameWindow, 120, 20, 570, 485);
+        ///std::cout << "Time start " << start << " stop "<< stop << " time  scan " << (stop - start) << std::endl;
+
+        // Nếu gần tới space rồi thì sleep 1 tý rồi space khỏi phải quét lại lần sau.
+        if ((spacePositionX >= perfectPosition - 1) && spacePositionX < perfectPosition) {
+            // TODO: Phải tính sleep theo BPM
+            Sleep((perfectPosition - spacePositionX));
+            lastSpaceTime = (int)std::time(0);
+            SendChat("s", false);
+            std::cout << "Space after wait " << spacePositionX << "\n";
+        }
+        else if (spacePositionX >= perfectPosition) {
+            lastSpaceTime = (int)std::time(0);
+            SendChat("s", false);
+            std::cout << "Space" << spacePositionX << "\n";
+        }
+        Sleep(1);
+    }
+}
+
+
+void AutoSpace() {
+   // return;
+    //namedWindow("Space", WINDOW_NORMAL);
+    while (true) {
+
+        if (!autoSpaceOn) {
+            continue;
+        }
+
+        screenshot2 = hwnd2mat(gameWindow, 60, 20, 600, 485);
         screenshot2 = FindButton(screenshot2, space, "sl");
+
+        //std::cout << "Thoi diem scan nut " << lastSpacePosition << endl;
+        
 
         if (lastSpacePosition > 0 && lastSpacePosition < 3) {
             t1 = high_resolution_clock::now();
         }
-        if (lastSpacePosition < (perfectPositionGoc + 3) && lastSpacePosition >= perfectPositionGoc) {
-            t2 = high_resolution_clock::now();
-            ms = duration_cast<milliseconds>(t2 - t1);
-           // demBpm = std::max(std::min(176, (int)(750 - ms.count())), 120);
-            demBpm = min(220, max(80, (int)(60000 / ms.count() * 1.48)));
-            //cout << demBpm << endl;
+
+        // Fix vụ đôi khi scan bị lâu hơn 2ms, nên thôi khỏi scan, cho nó chờ rồi space luon
+        if (lastSpacePosition >= perfectPositionGoc - 1 && lastSpacePosition < perfectPositionGoc) {
+            // Space luon ko can cho
+            //Sleep(perfectPositionGoc - lastSpacePosition);
+            lastSpacePosition = perfectPositionGoc;
         }
 
         // Send space
         int timeNow = (int)std::time(0);
-        if (nenSpace && lastSpacePosition > 40 && lastSpacePosition < 75 && timeNow > lastSpaceTime && lastSpacePosition >= perfectPosition) {
+        if (nenSpace && lastSpacePosition > 10 && lastSpacePosition < 45 && timeNow > lastSpaceTime && lastSpacePosition >= perfectPosition) {
+            if (lastSpacePosition == perfectPosition - 1) {
+                Sleep(1);
+                std::cout << "Sleep truoc khi space " << lastSpacePosition << endl;
+            }
             //std::cout << "Space " << startPosition << " < " <<  lastSpacePosition << endl;
             //lastSpacePosition = 0;
             
@@ -228,31 +233,39 @@ void Space() {
             nenSpace = false;
 
             if (lastSpacePosition != perfectPositionGoc) {
-                std::cout << lastSpacePosition << endl;
+                std::cout << "Bi lech per " << lastSpacePosition << endl;
                 demPer = 0;
             }
 
             //perfectPosition = perfectPositionGoc - rand() % 3 - 2;
-            if ((mucDoPer == 1 || rand() % 100 < (100 / mucDoPer)) && demPer < perXMax + rand() % 2) {
+            if ((mucDoPer == 1 || rand() % 100 < (100 / mucDoPer)) && demPer < perXMax) {
                 perfectPosition = perfectPositionGoc;
                 demPer++;
             }
             else {
                 int lechPer = 0;
-                while (lechPer == 0) {
-                    lechPer = 3 - rand() % 4;
-                }
+                lechPer = 2 - rand() % 3;
                 perfectPosition = perfectPositionGoc + lechPer;
-                demPer = 0;
+                if (perfectPosition != perfectPositionGoc) {
+                    demPer = 0;
+                }
                 stt();
             }
             
             //perfectPosition = perfectPositionGoc + 1 - rand() % 2;
            // perfectPosition = perfectPositionGoc;
         }
+
+        if (lastSpacePosition < (perfectPositionGoc + 3) && lastSpacePosition >= perfectPositionGoc) {
+            t2 = high_resolution_clock::now();
+            ms = duration_cast<milliseconds>(t2 - t1);
+            // demBpm = std::max(std::min(176, (int)(750 - ms.count())), 120);
+            demBpm = min(260, max(80, (int)(60000 / ms.count() * 0.74)));
+            //cout << demBpm << endl;
+        }
         Sleep(1);
        //imshow("Space", screenshot2);
-        //waitKey(1);
+       //waitKey(1);
     }
 }
 
@@ -297,10 +310,6 @@ void AutoKey() {
             // copy(queueButtons.begin(), queueButtons.end(), charArray);
             nenSpace = false;
             for (int x = 0; x < level; x++) {
-                if (x >= level - 1) {
-                    nenSpace = true;
-                }
-
                 char huongMuiTen = queueButtons[x * 3 + 1];
                 char nutBam = queueButtons[x * 3];
 
@@ -313,6 +322,9 @@ void AutoKey() {
                 charArray2[1] = '\n';
                 arduino.writeSerialPort(charArray2, 2);
 
+                if (x == level - 1) {
+                    nenSpace = true;
+                }
 
                 //int rd = rand() % 30 + 200  - demBpm;
                 //int rd = min(60, max(110, (int) (rand() % 30 + 180 - demBpm - queueButtons.size())));
@@ -322,27 +334,30 @@ void AutoKey() {
 
 
                 // Bam cham neu 2 nut lien tiep giong nhau
-                if (x < level - 6) {
-                    int next = x * 2 + 1;
-                    if (queueButtons[x] == queueButtons[next]) {
-                        Sleep(rand() % 10 + 70 - demBpm / 4);
-                    }
-                    if ((queueButtons[x] == '2' == queueButtons[next] == '8') || (queueButtons[x] == '8' == queueButtons[next] == '2')) {
-                        Sleep(rand() % 10 + 70 - demBpm / 4);
-                    }
+                int next = x * 2 + 1;
+                if (queueButtons[x] == queueButtons[next]) {
+                    int sleepTime = rand() % 10 + 70 - demBpm / 4;
+                    Sleep(sleepTime);
+                    //std::cout << "Bam cham do 2 nut lien giong nhau " << sleepTime << endl;
                 }
+                if ((nutBam == '2' && queueButtons[next] == '8') || (nutBam == '8' && queueButtons[next] == '2')) {
+                    int sleepTime = rand() % 10 + 70 - demBpm / 4;
+                    Sleep(sleepTime);
+                    //std::cout << "Bam cham  ngo do nut len xuong " << sleepTime << endl;
+                }
+                
 
                 // Giả ngố, thi thoảng bấm chậm lại
                 int rd2 = rand() % 100;
                 if (demGiaNgo < 1 && rd2 > 90 && x < 11 && x > 4) {
                     demGiaNgo++;
-                    Sleep(rand() % 20 + 90 - demBpm / 4);
-                    //std::cout << "Gia ngo" << endl;
+                    int ngo = rand() % 20 + 90 - demBpm / 4;
+                    Sleep(ngo);
+                    //std::cout << "Gia ngo " << ngo << endl;
                 }
                 
                 // Thi thoảng miss 1 cái
-                //int rd3 = rand() % (550 - demBpm * 2);
-                int rd3 = 0;
+                int rd3 = rand() % (550 - demBpm * 2);
                 if (rd3 == 50) {
                     char* charArray3 = new char[2];
                     charArray3[0] = queueButtons[x];
@@ -365,25 +380,68 @@ void AutoSS() {
         if (autoSS) {
             waitingForSS = 0;
             screenAutoSS = hwnd2mat(gameWindow, 90, 30, 0, 580);
-            screenAutoSS = FindButton(screenAutoSS, notice, "notice");
+            FindButton(screenAutoSS, notice, "notice");
             if (waitingForSS > 0) {
-                char* charArray = new char[2];
-                charArray[0] = 'f';
-                charArray[1] = '\n';
-                arduino.writeSerialPort(charArray, 2);
+                //std::cout << "Da tim thay dau hieu can an SS" << endl;
+                // Count number of ready players
+                countSS = 0;
+                screenCountReady = hwnd2mat(gameWindow, 760, 350, 150, 226);
+                screenCountReady = FindButton(screenCountReady, ss, "ss");
+
+                //std::cout << "So nguoi dang SS " << countSS << endl;
+                if (countSS >= minPlayer) {
+                    char* charArray = new char[2];
+                    charArray[0] = 'f';
+                    charArray[1] = '\n';
+                    arduino.writeSerialPort(charArray, 2);
+                }
             }
         }
-        Sleep(4000 + rand() % 3 * 1000);
-        //imshow("OpenCV", screenAutoSS);
+        //Sleep(500);
+        Sleep((3 - countSS + rand() % 2) * 1000);
+        //imshow("OpenCV", screenCountReady);
         //waitKey(1);
     }
+}
+
+void sendChat(std::string str, bool sendEnter) {
+    str += "\n";
+    int length = str.length();
+    char* charArray = new char[length + 1];
+    strcpy_s(charArray, length + 1, str.c_str());
+    arduino.writeSerialPort(charArray, length);
+
+    if (sendEnter) {
+        sendChat("enter", false);
+    }
+}
+
+void sendMouseClick(int x, int y) {
+    POINT currentMouse;
+    GetCursorPos(&currentMouse);
+    RECT gameWindowPosition;
+    GetWindowRect(gameWindow, &gameWindowPosition);
+
+    std::cout << "========= Mouse x" << currentMouse.x << " y " << currentMouse.y << endl;
+    std::cout << "Can click x" << (x + gameWindowPosition.left) << " y " << (y + gameWindowPosition.top) << endl;
+    x = x + gameWindowPosition.left - currentMouse.x;
+    y = y + gameWindowPosition.top - currentMouse.y;
+    std::cout << "Di chuyen chuot x " << x << " y " << y << endl;
+
+
+    std::stringstream sX, sY;
+    sX << std::setw(4) << std::setfill('0') << x;
+    sY << std::setw(4) << std::setfill('0') << y;
+    std::string s = "mclick" + sX.str() + sY.str();
+    sendChat(s, false);
 }
 
 //int WinMain(HINSTANCE hInstance,    HINSTANCE hPrevInstance,    LPSTR     lpCmdLine,    int       nShowCmd)    
 int main()
 {
+    //::ShowWindow(::GetConsoleWindow(), SW_SHOW);
     //std::cout << "Starttttttt" << std::endl;
-    string port = "\\\\.\\COM5";
+    string port = "\\\\.\\COM3";
     ifstream myfile("port.txt");
     if (myfile.is_open())
     {
@@ -402,16 +460,17 @@ int main()
     }
     else {
 
-       // cout << "Error in port name" << endl << endl;
-       // cin.get();
-        //MessageBoxA(NULL, "Cannot connect to port", "Cannot connect to port", MB_OK);
+        // cout << "Error in port name" << endl << endl;
+        // cin.get();
+         //MessageBoxA(NULL, "Cannot connect to port", "Cannot connect to port", MB_OK);
         return 0;
     }
 
+    //sendChat("esc", false);
     //Mat screenshot = imread("lena.jpg");
     gameId = GetGameProcess(L"Audition.exe");
     gameWindow = FindWindowFromProcessId(gameId);
-    
+
     if (gameId == NULL || gameWindow == NULL) {
         //MessageBoxA(NULL, "Cannot find the game", "Cannot find the game", MB_OK);
         gameId = GetGameProcess(L"Aubiz.exe");
@@ -420,6 +479,14 @@ int main()
             exit(0);
         }
     }
+
+    for (int a = 0; a < 10; a++) {
+        //Sleep(1000);
+        //sendMouseClick(10, 10);
+    }
+
+    //Sleep(1000);
+    //sendMouseClick(143, 197);
 
     // Init buttons Mat
     cvtColor(one, one, COLOR_BGRA2BGR);
@@ -439,20 +506,34 @@ int main()
     cvtColor(nine, nine, COLOR_BGRA2BGR);
     cvtColor(ninered, ninered, COLOR_BGRA2BGR);
     cvtColor(space, space, COLOR_BGRA2BGR);
-    
+
     // Begin threads
-    //std::thread QuetBiThread(QuetBi);
     std::thread AutoKeyThread(AutoKey);
-    std::thread SpaceThread(Space);
+    std::thread SpaceThread(AutoSpace);
     std::thread AutoSSThread(AutoSS);
 
     // Wating for control keys
     while (arduino.isConnected()) {
 
+        if (GetAsyncKeyState(VK_PRIOR) & 1) {
+            perfectPosition += 1;
+            perfectPositionGoc += 1;
+            std::cout << "Per position: " << perfectPosition << endl;
+        }
+
+        if (GetAsyncKeyState(VK_NEXT) & 1) {
+            perfectPosition -= 1;
+            perfectPositionGoc -= 1;
+			std::cout << "Per position: " << perfectPosition << endl;
+            //stt();
+        }
+
         if (GetAsyncKeyState(VK_OEM_PLUS) & 1) {
             perXMax += 1;
             stt();
         }
+
+
 
         if (GetAsyncKeyState(VK_OEM_MINUS) & 1) {
             perXMax -= 1;
@@ -470,6 +551,7 @@ int main()
 
 
         if (GetAsyncKeyState(VK_F9) & 1) {
+            //sendChat("Towis coong chuyenej vowis tao :))");
             if (mucDoPer == 1) {
                 std::cout << "Khong the giam nua. Muc hien tai: " << mucDoPer << std::endl;
             }
@@ -484,14 +566,17 @@ int main()
             stt();
         }
         if (GetAsyncKeyState(VK_F11) & 1) {
+
             autoKeyOn = !autoKeyOn;
             stt();
         }
 
         Sleep(100);
+        
     }
-    
+	
     return 0;
+
 }
 
 
